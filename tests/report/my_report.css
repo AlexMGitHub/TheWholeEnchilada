@@ -1,0 +1,34 @@
+td, th {
+    color: black;
+}
+
+body {
+    color: black;
+}
+
+a {
+    color: blue;
+}
+
+.asc.active .sort-icon {
+    /*finish triangle*/
+    border-bottom: 8px solid #000;
+  }
+  .desc.active .sort-icon {
+    /*finish triangle*/
+    border-top: 8px solid #000;
+  }
+
+  .expander::after {
+    content: " (show details)";
+    color: #0000ff;
+    font-style: italic;
+    cursor: pointer;
+  }
+
+  .collapser::after {
+    content: " (hide details)";
+    color: #0000ff;
+    font-style: italic;
+    cursor: pointer;
+  }

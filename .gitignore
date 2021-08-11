@@ -1,0 +1,13 @@
+# Package and IDE artifacts
+*.pyc
+*.egg*
+.vscode/
+
+# Testing related
+htmlcov/
+.coverage
+
+# Secret files
+db_root_password.txt
+db_user_password.txt
+web_secret_key.txt

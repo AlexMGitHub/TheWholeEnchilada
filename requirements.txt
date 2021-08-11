@@ -1,0 +1,18 @@
+# TheWholeEnchilada package in editable mode
+-e .
+
+# Flask related
+flask
+flask-debugtoolbar
+flask-login
+flask-wtf
+waitress
+
+# MySQL related
+mysql-connector-python
+python-dotenv
+
+# Testing
+pytest
+pytest-cov
+pytest-html
