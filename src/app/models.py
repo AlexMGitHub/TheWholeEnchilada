@@ -23,6 +23,10 @@ class User(UserMixin):
         """Accept and store a user ID."""
         self.id = id
 
+    def is_administrator(self):
+        """Return True if user is administrator, otherwise False."""
+        return self.id == 'root'
+
 
 @login_manager.user_loader
 def load_user(user_id):

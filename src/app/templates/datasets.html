@@ -1,0 +1,41 @@
+{% extends "dashboard_base.html" %}
+{% block title %}Datasets - {% endblock title %}
+{% block viewname %}Datasets{% endblock viewname %}
+{% block subsectiontitle %}My datasets content{% endblock subsectiontitle %}
+{% block subsection %}
+    {{ super() }}
+    <p> Testing 1,2,3...</p>
+    <div class="table-responsive">
+          <table class="table table-striped table-sm table-hover table-bordered align-middle">
+            <thead>
+              <tr>
+                <th scope="col">#</th>
+                <th scope="col">Dataset Name</th>
+                <th scope="col">Dataset description</th>
+                <th scope="col">SQL File</th>
+                <th scope="col">Loaded into database?</th>
+                <th scope="col">Load into database</th>
+              </tr>
+            </thead>
+            <tbody>
+    {% for idx, name, desc, file, loaded, data_path, desc_path in zip %}
+        <tr>
+            <td>{{ idx }}</td>
+            <td><a href={{ url_for('main.dataset', path=path) }}>{{ name }}</a></td>
+            <td><a href={{ url_for('main.dataset_desc', path=path) }}>{{ desc }}</a></td>
+            <td>{{ file }}</td>
+            <td>Yes</td>
+            <td><button type="button" class="btn btn-primary">Load {{ name }}</button></td>
+        </tr>
+    {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock subsection %}
+{% block table %}{% endblock table%}
+{% block datasets_navlink %}
+    <a class="nav-link active" aria-current="page" href={{ url_for('main.datasets') }}>
+{% endblock datasets_navlink %}
+{% block dashboard_navlink %}
+    <a class="nav-link" href={{ url_for('main.index') }}>
+{% endblock dashboard_navlink %}

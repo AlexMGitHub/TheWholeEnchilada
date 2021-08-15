@@ -16,74 +16,14 @@
 
 # %% Imports
 # Standard system imports
-import time
-import os
 
 # Related third party imports
-import pytest
-from dotenv import load_dotenv
-from mysql.connector import connect as SQLConnect
-from mysql.connector import Error as SQLError
-from mysql.connector.errors import DatabaseError
 
 # Local application/library specific imports
 from murachs_mysql import murachs_mysql as soln
 
 
 # %% Murach's MySQL Exercises
-@pytest.fixture(name="mysql_connection", scope="session")
-def mysql_connection():
-    """Fixture to initialize MySQL databases before testing solutions."""
-    load_dotenv('.env_secrets')         # Load MySQL passwords into environment
-    sql_databases = "/twe/src/murachs_mysql/sql/create_databases.sql"
-    cnx = connect_to_mysql()
-    cursor = cnx.cursor(buffered=True)  # Buffered cursor auto fetches results
-    create_databases(cursor, sql_databases)     # Create databases for tests
-    cursor.execute("USE ap")                    # Set database to 'ap'
-    cursor.close()
-    yield cnx       # Pass connection to tests, teardown after testing complete
-    cnx.close()     # Close connection to MySQL server as part of teardown
-
-
-def connect_to_mysql():
-    """Connect to MySQL server.
-
-    MySQL server takes time to boot-up.  Retry connection if it initially
-    fails.
-    """
-    connected = False
-    connection_attempts = 0
-    while not connected and connection_attempts < 10:
-        try:
-            cnx = SQLConnect(user='root',
-                             password=os.environ['MYSQL_ROOT_PASSWORD'],
-                             host='db',
-                             auth_plugin='caching_sha2_password',
-                             get_warnings=True,
-                             raise_on_warnings=False)
-            connected = True    # Successfully connected to server
-        except DatabaseError as err:
-            print(err)
-            connection_attempts += 1
-            time.sleep(1)       # Wait a second before retrying connection
-    if not connected:
-        raise DatabaseError("Failed to connect to MySQL server.")
-    return cnx
-
-
-def create_databases(cursor, filename):
-    """Create new databases from an .SQL file."""
-    with open(filename, 'r') as f:
-        lines = f.readlines()
-    queries = ''.join(lines)
-    try:
-        for query in queries.split(';'):
-            cursor.execute(query)
-    except SQLError as err:
-        print("Failed creating database: {}".format(err))
-        exit(1)
-
-
 def test_chapter3_solutions(mysql_connection):
     """Test solutions to chapter 3 exercises in Murach's MySQL."""
     chap3 = soln.chap3_solutions()          # List of queries

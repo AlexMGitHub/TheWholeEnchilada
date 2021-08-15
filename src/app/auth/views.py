@@ -11,7 +11,7 @@ Routes/view functions:
 
 # Related third party imports
 from flask import render_template, session, redirect, \
-    url_for, flash
+    url_for, flash, request
 from flask_login import login_user, logout_user, login_required
 
 # Local application/library specific imports
@@ -37,13 +37,14 @@ def login():
         flash('Enter username and password', category="warning")
     if form.validate_on_submit():
         cnx = db.connect_to_db(form.username.data, form.password.data)
-        print('After connection')
-        print(type(cnx))
         if isinstance(cnx, db.connection_types):
-            user = User(form.username.data)  # Create user object
+            next_page = request.args.get('next')
+            user = User(form.username.data)             # Create user object
             login_user(user, form.remember_me.data)     # Login user
             session['username'] = form.username.data    # Store username
-            return redirect(url_for('main.index'))
+            if next_page is None or not next_page.startswith('/'):
+                next_page = url_for('main.index')
+            return redirect(next_page)
         else:
             if '(28000)' in str(cnx):
                 msg = 'Invalid username or password'  # ACCESS_DENIED error

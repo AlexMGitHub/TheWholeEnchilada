@@ -13,8 +13,11 @@ services:
     secrets:
       - db_root_password
       - db_user_password
-    # volumes:
-      #  - ./:/mysql
+    volumes:
+      - ./src/db:/mysql
+      # Set container to your timezone and local time
+      - "/etc/timezone:/etc/timezone:ro"
+      - "/etc/localtime:/etc/localtime:ro"
     ports:
       - "3306:3306"
   web:
@@ -23,23 +26,31 @@ services:
       target: development
     ports:
       - "5000:5000"
-    # Enable volumes for development mode only
     volumes:
+      # Enable this volume for development mode only
       - ./:/twe
+      # Set container to your timezone and local time
+      - "/etc/timezone:/etc/timezone:ro"
+      - "/etc/localtime:/etc/localtime:ro"
     depends_on:
       - db
     environment:
       FLASK_SECRET_KEY_FILE: /run/secrets/web_secret_key
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
       MYSQL_DATABASE: ml_data
+      MYSQL_USER: flask
+      MYSQL_PASSWORD_FILE: /run/secrets/db_user_password
       # Unbuffered output so PRINT statements appear in Docker logs
       PYTHONUNBUFFERED: 1
     secrets:
       - web_secret_key
+      - db_user_password
+      - db_root_password
 
 secrets:
   db_root_password:
-    file: ./db_root_password.txt
+    file: ./docker/secrets/db_root_password.txt
   db_user_password:
-    file: ./db_user_password.txt
+    file: ./docker/secrets/db_user_password.txt
   web_secret_key:
-    file: ./web_secret_key.txt
+    file: ./docker/secrets/web_secret_key.txt

@@ -6,6 +6,7 @@
 # Testing related
 htmlcov/
 .coverage
+test-report/
 
 # Secret files
 db_root_password.txt

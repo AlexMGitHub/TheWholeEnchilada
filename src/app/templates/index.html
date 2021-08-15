@@ -1,10 +1,7 @@
-{% extends "base.html" %}
-{% block title %}Index{% endblock %}
-{% block head %}{{ super() }}{% endblock %}
-{% block content %}
-<h1>Index</h1>
-<p class="welcome">
-    This is my index page.
-</p>
-{% endblock %}
-{% block scripts %}{{ super() }}{% endblock %}
+{% extends "dashboard_base.html" %}
+{% block description %}"Dashboard homepage view"{% endblock description %}
+{% block viewname %}Dashboard{% endblock viewname %}
+{% block subsectiontitle %}My dashboard content{% endblock subsectiontitle %}
+{% block dashboard_navlink %}
+    <a class="nav-link active" aria-current="page" href={{ url_for('main.index') }}>
+{% endblock dashboard_navlink %}

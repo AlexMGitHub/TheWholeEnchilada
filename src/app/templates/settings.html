@@ -1,0 +1,15 @@
+{% extends "dashboard_base.html" %}
+{% block title %}Settings - {% endblock title %}
+{% block viewname %}Settings{% endblock viewname %}
+{% block subsectiontitle %}My settings content{% endblock subsectiontitle %}
+{% block subsection %}
+    {{ super() }}
+    <p> Testing 1,2,3...</p>
+{% endblock subsection %}
+{% block table %}{% endblock table%}
+{% block settings_navlink %}
+    <a class="nav-link active" aria-current="page" href={{ url_for('main.settings') }}>
+{% endblock settings_navlink %}
+{% block dashboard_navlink %}
+    <a class="nav-link" href={{ url_for('main.index') }}>
+{% endblock dashboard_navlink %}

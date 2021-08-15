@@ -2,10 +2,18 @@ body {
   font-size: .875rem;
 }
 
-.feather {
+/*Bootstrap icons seem to have a different alignment reference than Feather icons*/
+.feather:not(.bi) {
   width: 16px;
   height: 16px;
   vertical-align: text-bottom;
+}
+
+/*Do not align Bootstrap icons with text-bottom*/
+.bi {
+  width: 16px;
+  height: 16px;
+  /*vertical-align: text-bottom;*/
 }
 
 /*

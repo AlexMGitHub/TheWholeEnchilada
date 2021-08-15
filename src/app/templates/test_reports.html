@@ -1,0 +1,28 @@
+{% extends "dashboard_base.html" %}
+{% block title %}Test Reports - {% endblock title %}
+{% block viewname %}{{ page_name }}{% endblock viewname %}
+{% block subsectiontitle %}{% endblock subsectiontitle %}
+{% block subsection %}
+{{ super() }}
+<!--iFrame resizing script from https://stackoverflow.com/a/53286303-->
+<script type="text/javascript">
+    function resizeIframe(iframe) {
+        iframe.height = iframe.contentWindow.document.body.scrollHeight + 50 + "px";
+        window.requestAnimationFrame(() => resizeIframe(iframe));
+    }
+</script>
+<style>
+    #myFrame {
+        width: 100%
+    }
+</style>
+<iframe src={{ url }} onload="resizeIframe(this)" id="myFrame"></iframe>
+
+{% endblock subsection %}
+{% block table %}{% endblock table%}
+{% block orders_navlink %}
+<a class="nav-link active" aria-current="page" href={{ url_for('main.tests') }}>
+    {% endblock orders_navlink %}
+    {% block dashboard_navlink %}
+    <a class="nav-link" href={{ url_for('main.index') }}>
+        {% endblock dashboard_navlink %}

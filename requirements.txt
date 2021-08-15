@@ -10,7 +10,6 @@ waitress
 
 # MySQL related
 mysql-connector-python
-python-dotenv
 
 # Testing
 pytest
