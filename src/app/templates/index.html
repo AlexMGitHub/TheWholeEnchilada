@@ -1,7 +1,61 @@
 {% extends "dashboard_base.html" %}
 {% block description %}"Dashboard homepage view"{% endblock description %}
+{% block head%}
+    {{ super() }}
+    <!-- Custom styles for this template -->
+    <link href="/static/features/features.css" rel="stylesheet">
+{% endblock head%}
 {% block viewname %}Dashboard{% endblock viewname %}
-{% block subsectiontitle %}My dashboard content{% endblock subsectiontitle %}
+{% block viewheader %}{% endblock viewheader %}
+{% block subsectiontitle %}{% endblock subsectiontitle %}
+{% block subsectioncontent %}
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="cpu-fill" viewBox="0 0 16 16">
+    <path d="M6.5 6a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3z"/>
+    <path d="M5.5.5a.5.5 0 0 0-1 0V2A2.5 2.5 0 0 0 2 4.5H.5a.5.5 0 0 0 0 1H2v1H.5a.5.5 0 0 0 0 1H2v1H.5a.5.5 0 0 0 0 1H2v1H.5a.5.5 0 0 0 0 1H2A2.5 2.5 0 0 0 4.5 14v1.5a.5.5 0 0 0 1 0V14h1v1.5a.5.5 0 0 0 1 0V14h1v1.5a.5.5 0 0 0 1 0V14h1v1.5a.5.5 0 0 0 1 0V14a2.5 2.5 0 0 0 2.5-2.5h1.5a.5.5 0 0 0 0-1H14v-1h1.5a.5.5 0 0 0 0-1H14v-1h1.5a.5.5 0 0 0 0-1H14v-1h1.5a.5.5 0 0 0 0-1H14A2.5 2.5 0 0 0 11.5 2V.5a.5.5 0 0 0-1 0V2h-1V.5a.5.5 0 0 0-1 0V2h-1V.5a.5.5 0 0 0-1 0V2h-1V.5zm1 4.5h3A1.5 1.5 0 0 1 11 6.5v3A1.5 1.5 0 0 1 9.5 11h-3A1.5 1.5 0 0 1 5 9.5v-3A1.5 1.5 0 0 1 6.5 5z"/>
+  </symbol>
+</svg>
+<div class="container px-4 py-5" id="hanging-icons">
+    <h2 class="pb-2 border-bottom">Welcome, {{ user }}!</h2>
+    <div class="row g-4 py-5 row-cols-1 row-cols-lg-3">
+      <div class="col d-flex align-items-start">
+        <div class="icon-square bg-light text-dark flex-shrink-0 me-3">
+          <span data-feather="database" style="height: 1em; width: 1em;"></span>
+        </div>
+        <div>
+          <h2>Select a Dataset</h2>
+          <p>Select a dataset to train a machine learning algorithm on.  View summary statistics and perform exploratory data analysis.</p>
+          <a href="#" class="btn btn-primary">
+            Datasets
+          </a>
+        </div>
+      </div>
+      <div class="col d-flex align-items-start">
+        <div class="icon-square bg-light text-dark flex-shrink-0 me-3">
+          <svg class="bi-home" width="1em" height="1em"><use xlink:href="#cpu-fill"/></svg>
+        </div>
+        <div>
+          <h2>Start Training</h2>
+          <p>Select a machine learning algorithm to train on your dataset.  Tune hyperparameters and see the effects on accuracy, MSE, and confusion matrices.</p>
+          <a href="#" class="btn btn-primary">
+            Train
+          </a>
+        </div>
+      </div>
+      <div class="col d-flex align-items-start">
+        <div class="icon-square bg-light text-dark flex-shrink-0 me-3">
+          <span class="bi-pie-chart-fill"></span>
+        </div>
+        <div>
+          <h2>View Results</h2>
+          <p>View the results using interactive charts created using Bokeh.  Adjust the chart parameters and see the results in real time.</p>
+          <a href="#" class="btn btn-primary">
+            Charts
+          </a>
+        </div>
+      </div>
+    </div>
+{% endblock subsectioncontent %}
 {% block dashboard_navlink %}
     <a class="nav-link active" aria-current="page" href={{ url_for('main.index') }}>
 {% endblock dashboard_navlink %}

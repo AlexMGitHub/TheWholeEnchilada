@@ -7,9 +7,11 @@ Classes:
 # %% Imports
 # Standard system imports
 import os
+from pathlib import Path
+import math
 
 # Related third party imports
-from mysql.connector import connect
+from mysql.connector import connect, Error as SQLError
 from mysql.connector.errors import DatabaseError
 from mysql.connector.connection import MySQLConnection
 from mysql.connector.pooling import PooledMySQLConnection
@@ -30,6 +32,7 @@ class MySQLDatabase():
         self.connection = None
         self.connection_types = (MySQLConnection, PooledMySQLConnection,
                                  CMySQLConnection)
+        self.database = os.environ['MYSQL_DATABASE']
 
     def connect_to_db(self, user, password):
         """Connect to MySQL server.
@@ -42,7 +45,7 @@ class MySQLDatabase():
                           password=password,
                           host='db',
                           auth_plugin='caching_sha2_password',
-                          database=os.environ['MYSQL_DATABASE'],
+                          database=self.database,
                           get_warnings=True,
                           raise_on_warnings=False)
             self.connection = cnx
@@ -72,3 +75,127 @@ class MySQLDatabase():
             return                  # Not connected to MySQL server
         self.connection.close()     # Close MySQL connection
         self.connection = None      # Remove reference to connection object
+
+    def query_table_exists(self, table):
+        """Determine if specified table exists in MySQL database."""
+        cnx = self.connection
+        if not isinstance(cnx, self.connection_types):
+            raise DatabaseError('No connection to database!')
+        cursor = cnx.cursor(buffered=True)  # Buffered cursor fetches results
+        query = f"""SHOW tables LIKE "{table}";"""
+        cursor.execute(query)
+        rowcount = cursor.rowcount
+        cursor.close()
+        if rowcount == 0:  # Table doesn't exist
+            return False
+        return True
+
+    def create_table(self, sql_path):
+        """Load SQL file containing table into ml_data database."""
+        file_path = Path('/twe/src/app') / sql_path
+        cnx = self.connection
+        if not isinstance(cnx, self.connection_types):
+            raise DatabaseError('No connection to database!')
+        cursor = cnx.cursor()
+        with open(file_path, 'r') as f:
+            lines = f.readlines()
+        queries = ''.join(lines)
+        try:
+            for query in queries.split(';'):
+                cursor.execute(query)
+            cursor.close()
+            cnx.commit()
+        except SQLError as err:
+            print("Failed creating database: {}".format(err))
+        cursor.close()
+
+    def query_table_size(self, table):
+        """Return number of rows and columns contained in table."""
+        cnx = self.connection
+        if not isinstance(cnx, self.connection_types):
+            raise DatabaseError('No connection to database!')
+        cursor = cnx.cursor(buffered=True)  # Buffered cursor fetches results
+        try:
+            query = f"""DESCRIBE {table};"""
+            cursor.execute(query)
+            colcount = cursor.rowcount  # Result lists columns of table
+            query = f"""SELECT COUNT(*) FROM {table};"""
+            cursor.execute(query)
+            rowcount = cursor.fetchone()[0]
+            cursor.close()
+            return rowcount, colcount
+        except SQLError:
+            return (0, 0)
+
+    def describe_table(self, table):
+        """Generate summary statistics of numeric columns of table."""
+        cnx = self.connection
+        if not isinstance(cnx, self.connection_types):
+            raise DatabaseError('No connection to database!')
+        columns, data_types, summary = [], [], []
+        percentiles = [0.25, 0.5, 0.75]
+        cursor = cnx.cursor(buffered=True)  # Buffered cursor fetches results
+        # Determine which columns have numeric data types
+        query_numeric_columns = f"""
+        SELECT column_name, data_type FROM information_schema.columns
+                WHERE table_schema="{self.database}" AND
+                    table_name="{table}" AND
+                    data_type IN("int", "float", "double", "decimal") AND
+                    column_key != "PRI";"""
+        try:
+            cursor.execute(query_numeric_columns)
+            for column, data_type in cursor:
+                columns.append(column)
+                data_types.append(data_type)
+        except SQLError:
+            return None
+        # Apply aggregate functions to each numeric column
+        query_aggregate_functions = f"""
+        SELECT COUNT({column}), AVG({column}), STD({column}), MIN({column}),
+            MAX({column})
+        FROM {table};
+        """
+        for idx, (column, data_type) in enumerate(zip(columns, data_types)):
+            query_aggregate_functions = f"""
+            SELECT COUNT({column}), AVG({column}), STD({column}),
+            MIN({column}), MAX({column})
+            FROM {table};
+            """
+            cursor.execute(query_aggregate_functions)
+            for count, avg, std, mini, maxi in cursor:
+                summary.append({
+                    'column':       column,
+                    'data_type':    data_type,
+                    'count':        count,
+                    'avg':          avg,
+                    'std':          std,
+                    'min':          mini,
+                    'max':          maxi
+                })
+            # Calculate 25th, 50th, and 75th percentiles for each column
+            for perc in percentiles:
+                whole = False
+                index = math.ceil(count * perc)
+                if index == count * perc:
+                    whole = True  # Index is whole number
+                query_percentiles = f"""
+                SELECT {column}, row_index
+                FROM
+                    (
+                    SELECT {column}, ROW_NUMBER() OVER w AS 'row_index'
+                    FROM {table}
+                    WINDOW w AS (ORDER BY {column} ASC)
+                    ) AS temp
+                WHERE row_index >= {index}
+                LIMIT 2;
+                """
+                cursor.execute(query_percentiles)
+                val1 = cursor.fetchone()[0]
+                val2 = cursor.fetchone()[0]
+                if whole:
+                    percentile = (val1 + val2) / 2
+                else:
+                    percentile = val1
+                summary[idx][perc] = percentile  # Add percentile to dictionary
+        cursor.close()
+        return summary

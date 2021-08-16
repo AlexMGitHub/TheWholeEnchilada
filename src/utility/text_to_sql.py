@@ -17,9 +17,13 @@ from pathlib import Path
 class IrisSQL:
     """Class to convert the Iris dataset to an SQL file."""
 
-    def __init__(self, iris_text_fname):
-        """Accept Iris text filename."""
-        self.iris_text_fname = iris_text_fname
+    def __init__(self):
+        """Define paths to Iris files."""
+        iris = Path('/twe/src/app/static/datasets/iris')
+        self.iris_sql = list((iris / 'sql').glob('*.sql'))[0]
+        self.iris_template = list((iris / 'template').glob('*.sql'))[0]
+        self.iris_data = list((iris / 'data').glob('*.txt'))[0]
+        self.iris_desc = list((iris / 'desc').glob('*.txt'))[0]
 
     def format_iris_line(self, line, idx, last_line=False):
         """Reformat line from Iris text file as SQL-formatted values."""
@@ -33,18 +37,48 @@ class IrisSQL:
 
     def iris_to_sql(self):
         """Merge Iris SQL template with formatted text data."""
-        db = Path('/twe/src/db')
-        iris_text = db / 'text' / self.iris_text_fname
-        iris_template = db / 'sql' / 'templates' / 'iris_template.sql'
-        iris_sql = db / 'sql' / 'create_iris.sql'
-        with open(iris_sql, 'w') as sql:
-            with open(iris_template, 'r') as template_file:
+        with open(self.iris_sql, 'w') as sql:
+            with open(self.iris_template, 'r') as template_file:
                 template = template_file.read()
             sql.write(template)
-            with open(iris_text, 'r') as text_file:
+            with open(self.iris_data, 'r') as text_file:
                 prev_line = text_file.readline()
                 for idx, line in enumerate(text_file):
                     sql.write(self.format_iris_line(prev_line, idx+1))
                     prev_line = line
                 sql.write(self.format_iris_line(line, idx+2, last_line=True))
-        return iris_sql
+        return self.iris_sql
+
+
+class BostonSQL:
+    """Class to convert the Boston dataset to an SQL file."""
+
+    def __init__(self):
+        """Define paths to Boston files."""
+        boston = Path('/twe/src/app/static/datasets/boston')
+        self.boston_sql = list((boston / 'sql').glob('*.sql'))[0]
+        self.boston_template = list((boston / 'template').glob('*.sql'))[0]
+        self.boston_data = list((boston / 'data').glob('*.txt'))[0]
+        self.boston_desc = list((boston / 'desc').glob('*.txt'))[0]
+
+    def format_boston_line(self, line, idx, last_line=False):
+        """Reformat line from Boston text file as SQL-formatted values."""
+        if last_line:
+            punctuation = ';'       # Last line of query requires semi-colon
+        else:
+            punctuation = ',\n'     # Item in list requires comma and newline
+        return f"({idx},{line.rstrip()}){punctuation}"
+
+    def boston_to_sql(self):
+        """Merge Boston SQL template with formatted text data."""
+        with open(self.boston_sql, 'w') as sql:
+            with open(self.boston_template, 'r') as template_file:
+                template = template_file.read()
+            sql.write(template)
+            with open(self.boston_data, 'r') as text_file:
+                prev_line = text_file.readline()
+                for idx, line in enumerate(text_file):
+                    sql.write(self.format_boston_line(prev_line, idx+1))
+                    prev_line = line
+                sql.write(self.format_boston_line(line, idx+2, last_line=True))
+        return self.boston_sql

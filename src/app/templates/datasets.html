@@ -13,19 +13,24 @@
                 <th scope="col">Dataset Name</th>
                 <th scope="col">Dataset description</th>
                 <th scope="col">SQL File</th>
-                <th scope="col">Loaded into database?</th>
-                <th scope="col">Load into database</th>
+                <th scope="col">Table exists in MySQL database?</th>
+                <th scope="col">Table Rows, Columns</th>
+                <th scope="col">(Re)Load into database</th>
               </tr>
             </thead>
             <tbody>
-    {% for idx, name, desc, file, loaded, data_path, desc_path in zip %}
+    {% for idx, data_path, data_name, desc_path, desc_name, sql_path, sql_name, loaded, size in zip %}
         <tr>
             <td>{{ idx }}</td>
-            <td><a href={{ url_for('main.dataset', path=path) }}>{{ name }}</a></td>
-            <td><a href={{ url_for('main.dataset_desc', path=path) }}>{{ desc }}</a></td>
-            <td>{{ file }}</td>
-            <td>Yes</td>
-            <td><button type="button" class="btn btn-primary">Load {{ name }}</button></td>
+            <td><a href="/data_file/{{ data_path }}/display">{{ data_name }}</a></td>
+            <td><a href="/data_file/{{ desc_path }}/display">{{ desc_name }}</a></td>
+            <td><a href="/data_file/{{ sql_path }}/display">{{ sql_name }}</a></td>
+            <td>{{ loaded }}</td>
+            <td>{{ size[0] }}, {{ size[1] }}</td>
+            <td><a href="/data_file/{{ sql_path }}/load_sql">
+                    <button type="button" class="btn btn-primary">Load {{ data_name }}</button>
+                </a>
+            </td>
         </tr>
     {% endfor %}
             </tbody>

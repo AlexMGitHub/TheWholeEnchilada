@@ -15,7 +15,8 @@ from flask_login import login_required
 # Local application/library specific imports
 from . import main
 from ..testing import run_pytest
-from utility.text_to_sql import IrisSQL
+from .. import db
+from utility.text_to_sql import IrisSQL, BostonSQL
 
 
 # %% Routes and view functions
@@ -30,12 +31,56 @@ def index():
 # @login_required
 def datasets():
     """Datasets sidemenu option."""
-    dataset_paths = list(Path('/twe/src/db/sql').glob('*.sql'))
-    filenames = [x.name for x in dataset_paths]
-    dataset_names = [x.stem.split('_')[-1] for x in dataset_paths]
-    idx = list(range(1, len(filenames)+1))
-    return render_template('datasets.html', zip=zip(idx, filenames,
-                                                    dataset_names))
+    datasets_path = Path('/twe/src/app/static/datasets')
+    app_path = datasets_path.parent.parent
+    datasets = list(datasets_path.glob('*/'))
+    idx = list(range(1, len(datasets)+1))
+    data_paths = [list((x / 'data').glob('*.*'))[0].relative_to(app_path)
+                  for x in datasets]
+    data_names = [x.name for x in datasets]
+    desc_paths = [list((x / 'desc').glob('*.*'))[0].relative_to(app_path)
+                  for x in datasets]
+    descrips = [x.name for x in desc_paths]
+    sql_paths = [list((x / 'sql').glob('*.sql'))[0].relative_to(app_path)
+                 for x in datasets]
+    sql_names = [x.name for x in sql_paths]
+    loaded = [str(db.query_table_exists(x)) for x in data_names]
+    table_size = [db.query_table_size(x) for x in data_names]
+    return render_template('datasets.html', zip=zip(idx,
+                                                    data_paths,
+                                                    data_names,
+                                                    desc_paths,
+                                                    descrips,
+                                                    sql_paths,
+                                                    sql_names,
+                                                    loaded,
+                                                    table_size
+                                                    )
+                           )
+
+
+@main.route('/data_file/static/datasets/<name>/<datatype>/<data>/display')
+# @login_required
+def data_file(name, datatype, data):
+    """Return page containing specified data.
+
+    Return a template that uses an iFrame to display a static data text file.
+    """
+    print("HERE")
+    url = '/static/datasets/' + name + '/' + datatype + '/' + data
+    page_name = data
+    return render_template("data_file.html", url=url, page_name=page_name)
+
+
+@main.route('/data_file/static/datasets/<name>/<datatype>/<data>/load_sql')
+# @login_required
+def load_sql(name, datatype, data):
+    """Load specified SQL file into MySQL database as table."""
+    if not data.endswith('.sql'):
+        return
+    sql_path = Path(f'static/datasets/{name}/{datatype}/{data}')
+    db.create_table(sql_path)
+    return redirect(url_for('main.datasets'))
 
 
 @main.route('/train/', methods=["GET", "POST"])
@@ -111,9 +156,21 @@ def test_reports(report):
                            page_name=page_name)
 
 
-@main.route('/utility/iris')
-@login_required
-def convert_sql():
+@main.route('/utility/<data>')
+# @login_required
+def convert_sql(data):
     """Convert text file to SQL create table commands."""
-    iris_sql = IrisSQL('bezdekIris.data').iris_to_sql()
-    return f'<h1>{iris_sql}</h1>'
+    if data == 'iris':
+        iris_sql = IrisSQL().iris_to_sql()
+        return f'<h1>{iris_sql}</h1>'
+    elif data == 'boston':
+        boston_sql = BostonSQL().boston_to_sql()
+        return f'<h1>{boston_sql}</h1>'
+
+
+@main.route('/summary/')
+def summary():
+    result = db.describe_table('iris')
+    for dictionary in result:
+        for key, val in dictionary.items():
+            print(key, val)
