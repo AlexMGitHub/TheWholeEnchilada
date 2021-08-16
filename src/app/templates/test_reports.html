@@ -1,9 +1,8 @@
-{% extends "dashboard_base.html" %}
+{% extends "tests.html" %}
 {% block title %}Test Reports - {% endblock title %}
 {% block viewname %}{{ page_name }}{% endblock viewname %}
 {% block subsectiontitle %}{% endblock subsectiontitle %}
 {% block subsection %}
-{{ super() }}
 <!--iFrame resizing script from https://stackoverflow.com/a/53286303-->
 <script type="text/javascript">
     function resizeIframe(iframe) {
@@ -17,12 +16,37 @@
     }
 </style>
 <iframe src={{ url }} onload="resizeIframe(this)" id="myFrame"></iframe>
-
 {% endblock subsection %}
-{% block table %}{% endblock table%}
-{% block tests_navlink %}
-    <a class="nav-link active" aria-current="page" href={{ url_for('main.tests') }}>
-{% endblock tests_navlink %}
-{% block dashboard_navlink %}
-    <a class="nav-link" href={{ url_for('main.index') }}>
-{% endblock dashboard_navlink %}
+
+{% block unittest %}
+{% if "unit_tests" in url %}
+    <a class="nav-link active" aria-current="page" href={{ url_for('main.test_reports', report="unit") }}>
+{% else %}
+    {{ super() }}
+{% endif %}
+{% endblock unittest %}
+
+{% block unitcov %}
+{% if "unit_coverage" in url %}
+    <a class="nav-link active" aria-current="page" href={{ url_for('main.test_reports', report="unit_coverage") }}>
+{% else %}
+    {{ super() }}
+{% endif %}
+{% endblock unitcov %}
+
+{% block integtest %}
+{% if "integration_tests" in url %}
+    <a class="nav-link active" aria-current="page" href={{ url_for('main.test_reports', report="integration") }}>
+{% else %}
+    {{ super() }}
+{% endif %}
+{% endblock integtest %}
+
+{% block integcov %}
+{% if "integration_coverage" in url %}
+    <a class="nav-link active" aria-current="page" href={{ url_for('main.test_reports', report="integration_coverage") }}>
+{% else %}
+    {{ super() }}
+{% endif %}
+{% endblock integcov %}
+

@@ -9,7 +9,7 @@ Routes/view functions:
 from pathlib import Path
 
 # Related third party imports
-from flask import render_template, redirect, url_for
+from flask import session, render_template, redirect, url_for
 from flask_login import login_required
 
 # Local application/library specific imports
@@ -24,7 +24,7 @@ from utility.text_to_sql import IrisSQL, BostonSQL
 @login_required
 def index():
     """Index page of webapp."""
-    return render_template('index.html')
+    return render_template('index.html', username=session['username'])
 
 
 @main.route('/datasets/', methods=["GET", "POST"])
@@ -94,6 +94,7 @@ def train():
 @login_required
 def charts():
     """Charts sidemenu option."""
+
     return render_template('charts.html')
 
 

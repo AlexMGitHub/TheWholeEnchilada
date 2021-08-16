@@ -3,7 +3,6 @@
 {% block viewname %}Tests{% endblock viewname %}
 {% block subsectiontitle %}My tests content{% endblock subsectiontitle %}
 {% block subsection %}
-    {{ super() }}
     <p> Testing 1,2,3...</p>
     <a href={{ url_for('main.run_integration_tests') }}>Integration</a>
     <a href={{ url_for('main.run_unit_tests') }}>Unit</a>
@@ -24,25 +23,33 @@
         </h6>
         <ul class="nav flex-column mb-2">
         <li class="nav-item">
+            {% block unittest %}
             <a class="nav-link" href={{ url_for('main.test_reports', report="unit") }}>
+            {% endblock unittest %}
             <span data-feather="file-text"></span>
             Unit tests
             </a>
         </li>
         <li class="nav-item">
+            {% block unitcov %}
             <a class="nav-link" href={{ url_for('main.test_reports', report="unit_coverage") }}>
+            {% endblock unitcov %}
             <span data-feather="file-text"></span>
             Unit tests coverage
             </a>
         </li>
         <li class="nav-item">
+            {% block integtest %}
             <a class="nav-link" href={{ url_for('main.test_reports', report="integration") }}>
+            {% endblock integtest %}
             <span data-feather="file-text"></span>
             Integration tests
             </a>
         </li>
         <li class="nav-item">
+            {% block integcov %}
             <a class="nav-link" href={{ url_for('main.test_reports', report="integration_coverage") }}>
+            {% endblock integcov %}
             <span data-feather="file-text"></span>
             Integration tests coverage
             </a>
