@@ -20,7 +20,7 @@ import subprocess
 import os
 
 # Related third party imports
-from flask_debugtoolbar import DebugToolbarExtension
+#from flask_debugtoolbar import DebugToolbarExtension
 
 # Local application/library specific imports
 from app import create_app
@@ -29,5 +29,6 @@ from app import create_app
 # %% Webapp code
 app = create_app()
 # Flask-Debug toolbar will only run if Flask is in development mode
-app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False
-toolbar = DebugToolbarExtension(app)
+#app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False
+#app.config['DEBUG_TB_ENABLED'] = False
+#toolbar = DebugToolbarExtension(app)

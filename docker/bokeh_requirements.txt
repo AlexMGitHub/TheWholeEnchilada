@@ -1,0 +1,6 @@
+# TheWholeEnchilada package in editable mode
+-e .
+
+# Data manipulation and plotting related
+bokeh
+

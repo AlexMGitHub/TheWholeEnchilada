@@ -9,7 +9,9 @@ Routes/view functions:
 from pathlib import Path
 
 # Related third party imports
-from flask import session, render_template, redirect, url_for
+from bokeh.embed import server_session
+from bokeh.util.token import generate_session_id
+from flask import session, render_template, redirect, url_for, current_app
 from flask_login import login_required
 
 # Local application/library specific imports
@@ -31,6 +33,54 @@ def index():
 # @login_required
 def datasets():
     """Datasets sidemenu option."""
+    dataset = session.get('dataset')
+    datasets_path = Path('/twe/src/app/static/datasets')
+    datasets = list(datasets_path.glob('*/'))
+    data_names = [x.name for x in datasets]
+    loaded = [db.query_table_exists(x) for x in data_names]
+    loaded_names = [x for x, y in zip(data_names, loaded) if y]
+    if dataset is None:
+        return render_template('datasets.html', data_names=loaded_names)
+    else:
+        return redirect(url_for('main.dataset_preview', dataset=dataset))
+
+
+@main.route('/summary')
+def query_summary():
+    """"""
+    summary = {}
+    result = db.describe_table(session['dataset'])
+    for dictionary in result:
+        for key, val in dictionary.items():
+            if key not in summary:
+                summary[key] = [val]
+            else:
+                summary[key].append(val)
+    summary_table = []
+    for key, val in summary.items():
+        summary_table.append([key] + val)
+    return f"<p>{summary_table}</p>"
+
+
+@main.route('/datasets/<dataset>')
+# @login_required
+def dataset_preview(dataset):
+    """"""
+    session['dataset'] = dataset
+    datasets_path = Path('/twe/src/app/static/datasets')
+    datasets = list(datasets_path.glob('*/'))
+    data_names = [x.name for x in datasets]
+    loaded = [db.query_table_exists(x) for x in data_names]
+    loaded_names = [x for x, y in zip(data_names, loaded) if y]
+    summary = db.describe_table(session['dataset'])
+    return render_template('dataset_preview.html', dataset=dataset,
+                           data_names=loaded_names, summary=summary)
+
+
+@main.route('/datasets/load/')
+# @login_required
+def load_datasets():
+    """"""
     datasets_path = Path('/twe/src/app/static/datasets')
     app_path = datasets_path.parent.parent
     datasets = list(datasets_path.glob('*/'))
@@ -44,18 +94,20 @@ def datasets():
     sql_paths = [list((x / 'sql').glob('*.sql'))[0].relative_to(app_path)
                  for x in datasets]
     sql_names = [x.name for x in sql_paths]
-    loaded = [str(db.query_table_exists(x)) for x in data_names]
+    loaded = [db.query_table_exists(x) for x in data_names]
+    loaded_names = [x for x, y in zip(data_names, loaded) if y]
     table_size = [db.query_table_size(x) for x in data_names]
-    return render_template('datasets.html', zip=zip(idx,
-                                                    data_paths,
-                                                    data_names,
-                                                    desc_paths,
-                                                    descrips,
-                                                    sql_paths,
-                                                    sql_names,
-                                                    loaded,
-                                                    table_size
-                                                    )
+    return render_template('load_datasets.html', zip=zip(idx,
+                                                         data_paths,
+                                                         data_names,
+                                                         desc_paths,
+                                                         descrips,
+                                                         sql_paths,
+                                                         sql_names,
+                                                         loaded,
+                                                         table_size
+                                                         ),
+                           data_names=loaded_names
                            )
 
 
@@ -169,9 +221,14 @@ def convert_sql(data):
         return f'<h1>{boston_sql}</h1>'
 
 
-@main.route('/summary/')
-def summary():
-    result = db.describe_table('iris')
-    for dictionary in result:
-        for key, val in dictionary.items():
-            print(key, val)
+@main.route('/bokeh')
+@login_required
+def bokeh():
+    """"""
+    session_id = generate_session_id()
+    script = server_session(url='http://bokeh:5006/bokeh',
+                            session_id=session_id)
+    # Replace Docker alias in URL with localhost
+    script = script.replace("http://bokeh:5006", "http://localhost:5006")
+    # use the script in the rendered page
+    return render_template("embed.html", script=script, framework="Flask")

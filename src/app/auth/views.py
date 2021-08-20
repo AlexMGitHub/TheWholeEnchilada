@@ -65,5 +65,7 @@ def logout():
     """
     db.logout()                         # Logout of MySQL server
     logout_user()                       # Logout user using Flask-Login
+    session['username'] = None
+    session['dataset'] = None
     flash('You have been logged out', category='success')
     return redirect(url_for('auth.login'))

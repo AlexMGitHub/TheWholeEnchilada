@@ -1,9 +1,12 @@
 # TheWholeEnchilada package in editable mode
 -e .
 
+# Data manipulation and plotting related
+bokeh
+
 # Flask related
 flask
-flask-debugtoolbar
+#flask-debugtoolbar
 flask-login
 flask-wtf
 waitress

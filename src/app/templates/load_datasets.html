@@ -1,0 +1,47 @@
+{% extends "datasets.html" %}
+{% block title %}Datasets - {% endblock title %}
+{% block viewname %}Datasets{% endblock viewname %}
+{% block subsectiontitle %}My datasets content{% endblock subsectiontitle %}
+{% block subsection %}
+    <div class="table-responsive">
+          <table style="width: auto; text-align: center" class="table table-striped table-sm table-hover table-bordered align-middle">
+            <thead>
+              <tr>
+                <th scope="col">#</th>
+                <th scope="col">Dataset Name</th>
+                <th scope="col">Dataset description</th>
+                <th scope="col">SQL File</th>
+                <th scope="col">Table exists in MySQL database?</th>
+                <th scope="col">Table Rows, Columns</th>
+                <th scope="col">(Re)Load into database</th>
+              </tr>
+            </thead>
+            <tbody>
+    {% for idx, data_path, data_name, desc_path, desc_name, sql_path, sql_name, loaded, size in zip %}
+        <tr>
+            <td>{{ idx }}</td>
+            <td><a href="/data_file/{{ data_path }}/display">{{ data_name }}</a></td>
+            <td><a href="/data_file/{{ desc_path }}/display">{{ desc_name }}</a></td>
+            <td><a href="/data_file/{{ sql_path }}/display">{{ sql_name }}</a></td>
+            <td>{{ loaded }}</td>
+            <td>{{ size[0] }}, {{ size[1] }}</td>
+            <td><a href="/data_file/{{ sql_path }}/load_sql">
+                    <button type="button" class="btn btn-primary">Load {{ data_name }}</button>
+                </a>
+            </td>
+        </tr>
+    {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock subsection %}
+{% block datasets_navlink %}
+    <a class="nav-link active" aria-current="page" href={{ url_for('main.datasets') }}>
+{% endblock datasets_navlink %}
+{% block dashboard_navlink %}
+    <a class="nav-link" href={{ url_for('main.index') }}>
+{% endblock dashboard_navlink %}
+
+{% block load_datasets %}
+    <a class="nav-link active" aria-current="page" href={{ url_for('main.load_datasets') }}>
+{% endblock load_datasets %}

@@ -22,7 +22,8 @@ services:
       - "3306:3306"
   web:
     build:
-      context: .
+      context: ./
+      dockerfile: ./docker/webapp.Dockerfile
       target: development
     ports:
       - "5000:5000"
@@ -35,6 +36,8 @@ services:
     depends_on:
       - db
     environment:
+      BOKEH_SECRET_KEY_FILE: /run/secrets/bokeh_secret_key
+      BOKEH_SIGN_SESSIONS: "yes"
       FLASK_SECRET_KEY_FILE: /run/secrets/web_secret_key
       MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
       MYSQL_DATABASE: ml_data
@@ -43,11 +46,33 @@ services:
       # Unbuffered output so PRINT statements appear in Docker logs
       PYTHONUNBUFFERED: 1
     secrets:
-      - web_secret_key
+      - bokeh_secret_key
       - db_user_password
       - db_root_password
+      - web_secret_key
+  bokeh:
+    build:
+      context: ./
+      dockerfile: ./docker/bokeh.Dockerfile
+      target: development
+    ports:
+      - "5006:5006"
+    volumes:
+      # Enable this volume for development mode only
+      - ./src/bokeh:/bokeh
+      # Set container to your timezone and local time
+      - "/etc/timezone:/etc/timezone:ro"
+      - "/etc/localtime:/etc/localtime:ro"
+    depends_on:
+      - web
+    environment:
+      BOKEH_SECRET_KEY_FILE: /run/secrets/bokeh_secret_key
+    secrets:
+      - bokeh_secret_key
 
 secrets:
+  bokeh_secret_key:
+    file: ./docker/secrets/bokeh_secret_key.txt
   db_root_password:
     file: ./docker/secrets/db_root_password.txt
   db_user_password:

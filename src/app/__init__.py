@@ -22,9 +22,11 @@ db = MySQLDatabase()  # Create object representing MySQL database
 def create_app():  # config_name):
     """Application factory function for webapp."""
     app = Flask(__name__)
-    # Read SECRET_KEY from Docker secrets file
+    # Read secret keys from Docker secrets file
     with open(os.environ['FLASK_SECRET_KEY_FILE'], 'r') as secret_file:
         app.config['SECRET_KEY'] = secret_file.read()
+    with open(os.environ['BOKEH_SECRET_KEY_FILE'], 'r') as secret_file:
+        os.environ['BOKEH_SECRET_KEY'] = secret_file.read()
     # Initialize login manager and blueprints
     login_manager.init_app(app)
     from .main import main as main_blueprint

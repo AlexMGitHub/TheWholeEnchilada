@@ -1,0 +1,72 @@
+{% extends "datasets.html" %}
+{% block title %}Datasets - {% endblock title %}
+{% block head %}
+    {{ super() }}
+
+{% endblock head %}
+{% block viewname %}Datasets{% endblock viewname %}
+{% block subsectiontitle %}My datasets content{% endblock subsectiontitle %}
+{% block subsection %}
+    <h3>Summary statistics for {{ dataset }}</h3>
+    <hr/>
+    <div class="table-responsive">
+          <table style="width: auto; text-align: center;" class="table table-striped table-sm table-hover table-bordered align-middle">
+            <thead>
+              <tr>
+                <th scope="col">Column</th>
+                <th scope="col">Data Type</th>
+                <th scope="col">Count</th>
+                <th scope="col">Mean</th>
+                <th scope="col">Std Dev</th>
+                <th scope="col">Min</th>
+                <th scope="col">25%</th>
+                <th scope="col">50%</th>
+                <th scope="col">75%</th>
+                <th scope="col">Max</th>
+              </tr>
+            </thead>
+            <tbody>
+    {% for dictionary in summary %}
+        <tr>
+            <td>{{ dictionary['column'] }}</td>
+            <td>{{ dictionary['data_type'] }}</td>
+            <td>{{ dictionary['count'] }}</td>
+            <td style="text-align: right;">{{ '{:.2f}'.format(dictionary['avg']) }}</td>
+            <td style="text-align: right;">{{ '{:.2f}'.format(dictionary['std']) }}</td>
+            <td style="text-align: right;">{{ '{:.2f}'.format(dictionary['min']) }}</td>
+            <td style="text-align: right;">{{ '{:.2f}'.format(dictionary['25%']) }}</td>
+            <td style="text-align: right;">{{ '{:.2f}'.format(dictionary['50%']) }}</td>
+            <td style="text-align: right;">{{ '{:.2f}'.format(dictionary['75%']) }}</td>
+            <td style="text-align: right;">{{ '{:.2f}'.format(dictionary['max']) }}</td>
+        </tr>
+    {% endfor %}
+                </tbody>
+        </table>
+    </div>
+    <hr/>
+<script type="text/javascript">
+    function resizeIframe(iframe) {
+        iframe.height = iframe.contentWindow.document.body.scrollHeight + 500 + "px";
+        window.requestAnimationFrame(() => resizeIframe(iframe));
+    }
+</script>
+        <style>
+    #myFrame {
+        width: 50%;
+    }
+</style>
+    <iframe src="/static/bokeh/linegraph.html" onload="iframeLoaded()" id="myFrame"
+        sandbox="allow-same-origin allow-scripts"
+    height = 1000px
+    scrolling="no"
+    seamless="seamless"
+    frameborder="0">
+
+    ></iframe>
+{% endblock subsection %}
+{% block datasets_navlink %}
+    <a class="nav-link active" aria-current="page" href={{ url_for('main.datasets') }}>
+{% endblock datasets_navlink %}
+{% block dashboard_navlink %}
+    <a class="nav-link" href={{ url_for('main.index') }}>
+{% endblock dashboard_navlink %}

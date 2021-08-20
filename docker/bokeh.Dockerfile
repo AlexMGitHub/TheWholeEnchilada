@@ -1,30 +1,30 @@
 # syntax=docker/dockerfile:1
 FROM python:3.9.6 as base
 LABEL maintainer="AlexMGitHub@gmail.com"
-WORKDIR /twe
+WORKDIR /bokeh
 # Copy over minimum required files to install TheWholeEnchilada package
 COPY setup.py  ./
 COPY src/__init__.py ./src/__init__.py
 # Copy the requirements.txt separately so build cache only busts if requirements.txt changes
-COPY requirements.txt ./
+COPY docker/bokeh_requirements.txt ./
 # Reduce image size by not caching .whl files
-RUN pip3 install --no-cache-dir -r requirements.txt
+RUN pip3 install --no-cache-dir -r bokeh_requirements.txt
 # Add and run as non-root user for security reasons (after installation)
-RUN useradd -ms /bin/bash webapp
-USER webapp
-# Expose Flask webapp port
-EXPOSE 5000
-# Flask environment variables
-ENV FLASK_APP=./src/webapp.py
-# Listen for connections on public network interface
-ENV FLASK_RUN_HOST=0.0.0.0
+RUN useradd -ms /bin/bash bokeh
+USER bokeh
+# Expose Bokeh server default port
+EXPOSE 5006
+# Bokeh environment variables
+ENV BOKEH_ALLOW_WS_ORIGIN=localhost:5000,localhost:5006
+ENV BOKEH_SIGN_SESSIONS=yes
 
 
 FROM base as development
+# Copy boot.sh shell script to run commands on container spin-up
+COPY src/bokeh/boot.sh ./
 # Development webserver
 LABEL build="development"
-ENV FLASK_ENV=development
-ENTRYPOINT ["flask", "run"]
+ENTRYPOINT ["./boot.sh"]
 
 
 FROM base as production
@@ -32,5 +32,4 @@ FROM base as production
 COPY . ./
 # Production webserver
 LABEL build="production"
-ENV FLASK_ENV=production
-ENTRYPOINT ["waitress-serve", "--port=5000", "webapp:app"]
+ENTRYPOINT ["./boot.sh"]

@@ -196,6 +196,7 @@ class MySQLDatabase():
                     percentile = (val1 + val2) / 2
                 else:
                     percentile = val1
-                summary[idx][perc] = percentile  # Add percentile to dictionary
+                perc_key = str(round(100*perc)) + '%'
+                summary[idx][perc_key] = percentile  # Add percentile to dict
         cursor.close()
         return summary
