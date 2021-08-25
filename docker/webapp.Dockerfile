@@ -11,6 +11,9 @@ COPY docker/webapp_requirements.txt ./
 RUN pip3 install --no-cache-dir -r webapp_requirements.txt
 # Add and run as non-root user for security reasons (after installation)
 RUN useradd -ms /bin/bash webapp
+# Change ownership of Bokeh data directory to webapp user
+COPY src/bokeh_server/data/ src/bokeh_server/data/
+RUN chown webapp src/bokeh_server/data/
 USER webapp
 # Expose Flask webapp port
 EXPOSE 5000

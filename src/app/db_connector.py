@@ -150,11 +150,6 @@ class MySQLDatabase():
         except SQLError:
             return None
         # Apply aggregate functions to each numeric column
-        query_aggregate_functions = f"""
-        SELECT COUNT({column}), AVG({column}), STD({column}), MIN({column}),
-            MAX({column})
-        FROM {table};
-        """
         for idx, (column, data_type) in enumerate(zip(columns, data_types)):
             query_aggregate_functions = f"""
             SELECT COUNT({column}), AVG({column}), STD({column}),
@@ -200,3 +195,30 @@ class MySQLDatabase():
                 summary[idx][perc_key] = percentile  # Add percentile to dict
         cursor.close()
         return summary
+
+    def get_table(self, table):
+        """Return table as dictionary where keys are the table column names."""
+        cnx = self.connection
+        if not isinstance(cnx, self.connection_types):
+            raise DatabaseError('No connection to database!')
+        # Get column names of table and assign to dict as keys
+        cursor = cnx.cursor()  # Unbuffered cursor, must fetch results
+        query = f"""
+        SELECT COLUMN_NAME
+        FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_SCHEMA = '{self.database}' AND TABLE_NAME = '{table}'
+        """
+        cursor.execute(query)
+        table_results = {}
+        for (key,) in cursor:  # Returns list of tuples containing single value
+            table_results[key] = []
+        cursor.close()
+        # Use dictionary cursor to get contents of table with columns as keys
+        dict_cursor = cnx.cursor(dictionary=True)
+        query = f"""SELECT * FROM {table}"""
+        dict_cursor.execute(query)
+        for row in dict_cursor:
+            for key, value in row.items():
+                table_results[key].append(value)
+        dict_cursor.close()
+        return table_results

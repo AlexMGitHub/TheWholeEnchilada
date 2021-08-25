@@ -7,6 +7,7 @@ Routes/view functions:
 # %% Imports
 # Standard system imports
 from pathlib import Path
+import pickle
 
 # Related third party imports
 from bokeh.embed import server_session
@@ -45,11 +46,12 @@ def datasets():
         return redirect(url_for('main.dataset_preview', dataset=dataset))
 
 
-@main.route('/summary')
+@main.route('/summary/')
 def query_summary():
     """"""
     summary = {}
     result = db.describe_table(session['dataset'])
+    return f"<p>{result}</p>"
     for dictionary in result:
         for key, val in dictionary.items():
             if key not in summary:
@@ -221,14 +223,46 @@ def convert_sql(data):
         return f'<h1>{boston_sql}</h1>'
 
 
-@main.route('/bokeh')
-@login_required
-def bokeh():
+@main.route('/bokeh/<dataset>')
+# @login_required
+def bokeh(dataset):
     """"""
+    # Write data file to volume based on user-selected dataset
+    dataset = session.get('dataset')
+    if dataset is None:
+        return redirect(url_for('main.datasets'))
+    data = {}
+    table = db.get_table(dataset)
+    data['table'] = table
+    if dataset == 'iris':
+        data['metadata'] = {
+            'dataset': 'iris',
+            'type': 'classification',
+            'target': 'class'
+        }
+    elif dataset == 'boston':
+        data['metadata'] = {
+            'dataset': 'boston',
+            'type': 'regression',
+            'target': 'CRIM'
+        }
+    elif dataset == 'autompg':
+        data['metadata'] = {
+            'dataset': 'autompg',
+            'type': 'regression',
+            'target': 'mpg'
+        }
+    data['metadata']['summary'] = db.describe_table(dataset)
+    data_path = Path(f'/twe/src/bokeh_server/data/{dataset}.data')
+    print(data_path)
+    with open(data_path, 'wb') as data_file:
+        pickle.dump(data, data_file)
     session_id = generate_session_id()
-    script = server_session(url='http://bokeh:5006/bokeh',
+    script = server_session(url='http://bokeh:5006/eda/',
                             session_id=session_id)
+    # Delete data file after receiving script
+    # data_path.unlink()
     # Replace Docker alias in URL with localhost
     script = script.replace("http://bokeh:5006", "http://localhost:5006")
-    # use the script in the rendered page
-    return render_template("embed.html", script=script, framework="Flask")
+    # Use the script in the rendered page
+    return render_template("dataset_preview.html", script=script)

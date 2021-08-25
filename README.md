@@ -79,6 +79,12 @@ The following commands apply to the temporary Machine Learning/working/mysql/ di
   - How do I set up docker secrets for the password?
   - How do I set up non-root user accounts?
 
+- Share volume between two containers without using host:
+  - https://stackoverflow.com/questions/43559619/docker-compose-how-to-mount-path-from-one-to-another-container
+  - Allows me to pickle data and provide it to bokeh server
+  - must change owner of data folder in webapp container so that it can write/delete files
+  - bokeh can be read only
+
 - Check all existing containers, running or stopped:
 `docker ps -a`
 
@@ -279,3 +285,20 @@ serve multiple apps by doing something like:
 ```bash
 bokeh serve `ls *.py` --address 0.0.0.0 --session-ids external-signed
 ```
+
+#### LRU Cache
+- https://github.com/bokeh/bokeh/blob/branch-2.4/examples/app/stocks/main.py
+- uses "least recently used" cache from functools
+- caches responses so that repeated calls with teh same arguments can be returned without recalculating (memoization)
+-
+
+### Checking if the Bokeh plot has rendered
+Large Bokeh visualizations take a few seconds to load, and so I added a Bootstrap spinner to my Jinja template to give a visual indication to the user that something is happening.  However, hiding the spinner once the visualization rendered again proved trickier than I expected.  I assumed that I could write a JavaScript function that is called on a `document.onreadystatechange` event to hide the spinner once the visualization renders, but that approach didn't work.  The document is considered to be completely loaded (`document.readyState === "complete"`) before the visualization is rendered, and so the spinner never appears on the page.  After some experimentation, I found that I could wrap the injected Bokeh JavaScript code in a `<div>` and use `ResizeObserver` to check if the height of the `<div>` was greater than zero.  If so, the visualization has rendered and the spinner can be hidden.
+
+### Citation Policy:
+
+If you publish material based on databases obtained from this repository, then, in your acknowledgements, please note the assistance you received by using this repository. This will help others to obtain the same data sets and replicate your experiments. We suggest the following pseudo-APA reference format for referring to this repository:
+
+    Dua, D. and Graff, C. (2019). UCI Machine Learning Repository [http://archive.ics.uci.edu/ml]. Irvine, CA: University of California, School of Information and Computer Science.
+
+https://www.kaggle.com/shwetabh123/mall-customers/version/1
