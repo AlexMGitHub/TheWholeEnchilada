@@ -3,4 +3,4 @@
 
 # Data manipulation and plotting related
 bokeh
-
+pandas

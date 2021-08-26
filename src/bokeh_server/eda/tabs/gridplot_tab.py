@@ -127,7 +127,6 @@ def gridplot_tab(data, numeric_cols, metadata, marker_order):
         p.legend.padding = 5
         p.legend.margin = 30
         p.legend.label_standoff = 0
-
         # Style blank plot
         p.outline_line_width = 0
         # Disable and hide toolbar
@@ -153,7 +152,7 @@ def gridplot_tab(data, numeric_cols, metadata, marker_order):
     blank_plot = create_blank_plot()
     grid = gridplot(grid_layout, sizing_mode='scale_width',
                     toolbar_location=None)
-    test = bokeh_row(grid, blank_plot)
-    tab = Panel(child=test, title='Grid Plot')
+    grid_with_legend = bokeh_row(grid, blank_plot)
+    tab = Panel(child=grid_with_legend, title='Grid Plot')
 
     return tab

@@ -113,21 +113,9 @@
         <div
           class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
           <h1 class="h2">{% block viewname %}{% endblock viewname %}</h1>
-          {% block viewheader_buttons %}
-          <div class="btn-toolbar mb-2 mb-md-0">
-            <div class="btn-group me-2">
-              <button type="button" class="btn btn-sm btn-outline-secondary">Share</button>
-              <button type="button" class="btn btn-sm btn-outline-secondary">Export</button>
-            </div>
-            <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle">
-              <span data-feather="calendar"></span>
-              This week
-            </button>
-          </div>
-          {% endblock viewheader_buttons%}
+          {% block viewheader_buttons %}{% endblock viewheader_buttons%}
         </div>
         {% endblock viewheader %}
-        <!-- <canvas class="my-4 w-100" id="myChart" width="900" height="380"></canvas> -->
 
         {% block subsection %}
         <h2>{% block subsectiontitle %}Section title{% endblock subsectiontitle %}</h2>

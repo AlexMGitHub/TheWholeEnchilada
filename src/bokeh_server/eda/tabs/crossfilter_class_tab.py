@@ -82,8 +82,9 @@ def crossfilter_class_tab(data, numeric_cols, metadata, marker_order):
         """Create Crossfilter scatter plot."""
         group_by_size()
         scatter_plot = figure(title=f'{y.title()} vs. {x.title()}',
+                              height=800, width=1000,
                               sizing_mode="scale_width",
-                              max_width=800, output_backend="webgl",
+                              max_width=1000, output_backend="webgl",
                               background_fill_color="#DDDDDD",
                               outline_line_color="white",
                               toolbar_location="above")
@@ -98,12 +99,19 @@ def crossfilter_class_tab(data, numeric_cols, metadata, marker_order):
         scatter_plot.axis.axis_label_text_font_size = "1em"
         scatter_plot.axis.axis_label_text_font_style = "bold"
         # Style legend
-        scatter_plot.legend.background_fill_color = "#c8c8c8"
+        scatter_plot.legend.background_fill_color = "#DDDDDD"
         scatter_plot.legend.border_line_color = "white"
         scatter_plot.legend.label_text_font_style = "bold"
         scatter_plot.legend.label_text_font_size = "1em"
         scatter_plot.legend.glyph_width = 30
         scatter_plot.legend.glyph_height = 30
+        scatter_plot.legend.spacing = 0
+        scatter_plot.legend.border_line_width = 2
+        scatter_plot.legend.border_line_color = "black"
+        scatter_plot.legend.padding = 5
+        scatter_plot.legend.margin = 30
+        scatter_plot.legend.label_standoff = 0
+        scatter_plot.add_layout(scatter_plot.legend[0], 'right')
         # Add axis titles
         scatter_plot.xaxis.axis_label = x.title()
         scatter_plot.yaxis.axis_label = y.title()
@@ -128,6 +136,8 @@ def crossfilter_class_tab(data, numeric_cols, metadata, marker_order):
         """Callback for selectx dropdown menu to change X-axis values."""
         selecty.options = nix([new], numeric_cols)
         selectsize.options = ['None'] + nix([new, selecty.value], numeric_cols)
+        if selectsize.value not in selectsize.options:
+            selectsize.value = 'None'
         plot = create_plot(new, selecty.value)
         plot.xaxis.axis_label = selectx.value
         update(plot)
@@ -136,6 +146,8 @@ def crossfilter_class_tab(data, numeric_cols, metadata, marker_order):
         """Callback for selecty dropdown menu to change Y-axis values."""
         selectx.options = nix([new], numeric_cols)
         selectsize.options = ['None'] + nix([new, selectx.value], numeric_cols)
+        if selectsize.value not in selectsize.options:
+            selectsize.value = 'None'
         plot = create_plot(selectx.value, new)
         plot.yaxis.axis_label = selecty.value
         update(plot)

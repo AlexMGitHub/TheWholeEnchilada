@@ -27,6 +27,7 @@ FROM base as development
 COPY src/bokeh_server/boot.sh ./src/bokeh_server/boot.sh
 # Development webserver
 LABEL build="development"
+ENV BOKEH_ENV=development
 ENTRYPOINT ["./src/bokeh_server/boot.sh"]
 
 
@@ -35,4 +36,5 @@ FROM base as production
 COPY . ./
 # Production webserver
 LABEL build="production"
-ENTRYPOINT ["./boot.sh"]
+ENV BOKEH_ENV=production
+ENTRYPOINT ["./src/bokeh_server/boot.sh"]
