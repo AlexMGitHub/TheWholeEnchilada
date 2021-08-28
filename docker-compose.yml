@@ -14,7 +14,7 @@ services:
       - db_root_password
       - db_user_password
     volumes:
-      - ./src/db:/mysql
+      - dbdata:/var/lib/mysql
       # Set container to your timezone and local time
       - "/etc/timezone:/etc/timezone:ro"
       - "/etc/localtime:/etc/localtime:ro"
@@ -59,7 +59,7 @@ services:
     ports:
       - "5006:5006"
     volumes:
-      - data-volume:/twe/src/bokeh_server/data:ro
+      - data-volume:/twe/src/bokeh_server/data
       # Enable this volume for development mode only
       - ./:/twe
       # Set container to your timezone and local time
@@ -83,4 +83,5 @@ secrets:
     file: ./docker/secrets/web_secret_key.txt
 
 volumes:
+  dbdata:
   data-volume:

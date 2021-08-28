@@ -24,7 +24,7 @@ class DatasetManager:
         """Accept Flask session and initialize paths and metadata."""
         self.session = session
         self.datasets_path = Path('/twe/src/app/static/datasets')
-        self.data_path = Path('/twe/src/bokeh_server/data/pickled_data')
+        self.data_path = Path('/twe/src/bokeh_server/data/eda/pickled_data')
         self.metadata = {
             'iris': {
                 'dataset': 'iris',

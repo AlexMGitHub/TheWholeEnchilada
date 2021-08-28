@@ -14,6 +14,17 @@ docker container exec $(docker ps --filter name=thewholeenchilada_db_1 -q) cat /
 - get into container's terminal
 `docker exec -it thewholeenchilada_db_1 bash`
 
+## EDA Todo
+Add PCA and mutual information to EDA visualization
+MI can be bar plot
+PCA can have 3 plots:
+1.	scatter plot of 2 principal components
+2.	bar graph showing % variance explained for each component - could be scatterplot
+3.	line graph showing cumulative variance explained - could be bar graph
+
+https://www.kaggle.com/ryanholbrook/principal-component-analysis
+https://www.kaggle.com/ryanholbrook/mutual-information
+
 ## Todo
 - Read chapter 3 of mysql connector/python revealed
 - Read the entire connector/python guide and tutorial at:

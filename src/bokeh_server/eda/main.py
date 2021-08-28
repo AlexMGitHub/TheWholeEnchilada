@@ -23,9 +23,11 @@ from bokeh_server.eda.tabs.summary_tab import summary_tab
 from bokeh_server.eda.tabs.gridplot_tab import gridplot_tab
 
 
-# %% Setup
+# -----------------------------------------------------------------------------
+# Setup
+# -----------------------------------------------------------------------------
 # Read pickled data contained in Docker volume
-data_path = Path('src/bokeh_server/data/pickled_data')
+data_path = Path('src/bokeh_server/data/eda/pickled_data')
 with open(data_path, 'rb') as data_file:
     pickled_data = pickle.load(data_file)
 data = pickled_data['data']
@@ -48,7 +50,9 @@ marker_order = ['circle', 'square', 'plus', 'star', 'triangle', 'diamond',
                 'cross', 'dash', 'dot', 'x', 'y']
 
 
-# %% Layout
+# -----------------------------------------------------------------------------
+# Layout
+# -----------------------------------------------------------------------------
 tab1 = summary_tab(data, numeric_cols, metadata)
 tab2 = crossfilter_class_tab(data, numeric_cols, metadata, marker_order)
 tab3 = gridplot_tab(data, numeric_cols, metadata, marker_order)
