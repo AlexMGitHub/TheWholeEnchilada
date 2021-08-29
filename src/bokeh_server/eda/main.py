@@ -27,7 +27,7 @@ from bokeh_server.eda.tabs.gridplot_tab import gridplot_tab
 # Setup
 # -----------------------------------------------------------------------------
 # Read pickled data contained in Docker volume
-data_path = Path('src/bokeh_server/data/eda/pickled_data')
+data_path = Path('src/bokeh_server/data/eda_data')
 with open(data_path, 'rb') as data_file:
     pickled_data = pickle.load(data_file)
 data = pickled_data['data']

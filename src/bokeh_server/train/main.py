@@ -14,8 +14,7 @@ Columns:
 # Standard system imports
 import pandas as pd
 from pathlib import Path
-import threading
-from time import sleep
+import pickle
 
 # Related third party imports
 from bokeh.io import curdoc
@@ -24,29 +23,32 @@ from bokeh.models import Button, CheckboxGroup, Div, RangeSlider, Select, \
     Slider
 
 # Local application/library specific imports
-from twe_learn.train_model import train_model
+from bokeh_server.train.twe_learn.train_model import train_model
+
 
 # -----------------------------------------------------------------------------
 # Setup
 # -----------------------------------------------------------------------------
 doc = curdoc()  # Must have reference to current document for multithreading
 
-
-def pd_data(data_path):
-    return pd.read_csv(data_path, header=None,
-                       names=['sepal_width', 'sepal_length', 'petal_width',
-                              'petal_length', 'class'])
-
-
 # Local data
-data_path = list(Path('src/bokeh_server/data/').glob('*.txt'))[0]
-data_df = pd_data(data_path)
-data_cols = list(data_df.columns)
-data = data_df.to_dict('list')
-numeric_cols = [x for x in data_cols
-                if not x.endswith('_id') and type(data[x][0]) in (float, int)]
-X = data_df[['sepal_width', 'sepal_length', 'petal_width', 'petal_length']]
-y = data_df['class']
+data_path = Path('src/bokeh_server/data/eda_data')
+with open(data_path, 'rb') as data_file:
+    pickled_data = pickle.load(data_file)
+data = pickled_data['data']
+metadata = pickled_data['metadata']
+# Extract metadata
+dataset = metadata['dataset']
+ml_type = metadata['type']
+target = metadata['target']
+# Delete index column from data table and create lists of valid columns
+id_col = dataset + '_id'
+del data[id_col]
+data_cols = list(data.keys())
+numeric_cols = [x for x in data_cols if type(data[x][0]) in (float, int)]
+data_df = pd.DataFrame.from_dict(data)
+X = data_df[numeric_cols]
+y = data_df[target]
 
 # Set heights, widths, and margin of columns
 FEATURES_WIDTH = 200

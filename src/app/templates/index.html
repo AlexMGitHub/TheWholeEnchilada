@@ -25,7 +25,7 @@
         <div>
           <h2>Select a Dataset</h2>
           <p>Select a dataset to train a machine learning algorithm on.  View summary statistics and perform exploratory data analysis.</p>
-          <a href="#" class="btn btn-primary">
+          <a href={{ url_for('main.datasets') }} class="btn btn-primary">
             Datasets
           </a>
         </div>
@@ -37,7 +37,7 @@
         <div>
           <h2>Start Training</h2>
           <p>Select a machine learning algorithm to train on your dataset.  Tune hyperparameters and see the effects on accuracy, MSE, and confusion matrices.</p>
-          <a href="#" class="btn btn-primary">
+          <a href={{ url_for('main.train') }} class="btn btn-primary">
             Train
           </a>
         </div>
@@ -49,8 +49,8 @@
         <div>
           <h2>View Results</h2>
           <p>View the results using interactive charts created using Bokeh.  Adjust the chart parameters and see the results in real time.</p>
-          <a href="#" class="btn btn-primary">
-            Charts
+          <a href={{ url_for('main.results') }} class="btn btn-primary">
+            Results
           </a>
         </div>
       </div>

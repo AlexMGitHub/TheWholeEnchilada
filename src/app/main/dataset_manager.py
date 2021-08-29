@@ -23,8 +23,8 @@ class DatasetManager:
     def __init__(self, session):
         """Accept Flask session and initialize paths and metadata."""
         self.session = session
-        self.datasets_path = Path('/twe/src/app/static/datasets')
-        self.data_path = Path('/twe/src/bokeh_server/data/eda/pickled_data')
+        self.datasets_path = Path('src/app/static/datasets')
+        self.data_path = Path('src/bokeh_server/data/eda_data')
         self.metadata = {
             'iris': {
                 'dataset': 'iris',
@@ -87,7 +87,7 @@ class DatasetManager:
 
     def build_datasets_table(self):
         """Return data needed to build table used by load_datasets() route."""
-        app_path = Path('/twe/src/app')
+        app_path = Path('src/app')
         datasets = self.list_datasets_paths()
         idx = list(range(1, len(datasets)+1))
         data_paths = [list((self.datasets_path/x/'data').glob('*.*'))[0].

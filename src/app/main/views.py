@@ -108,24 +108,36 @@ def load_sql(name, datatype, data):
 @main.route('/train/', methods=["GET", "POST"])
 @login_required
 def train():
-    """Train sidemenu option."""
-    return render_template('train.html')
-
-
-@main.route('/settings/', methods=["GET", "POST"])
-@login_required
-def settings():
-    """Settings sidemenu option."""
-    return render_template('settings.html')
+    """Load Bokeh training visualization to train model."""
+    dataset = mgr.current_dataset()
+    if dataset is None:
+        return redirect(url_for('main.datasets'))
+    # Generate session ID and obtain JavaScript from Bokeh server
+    session_id = generate_session_id()
+    script = server_session(url='http://bokeh:5006/train/',
+                            session_id=session_id)
+    # Replace Docker alias in URL with localhost
+    script = script.replace("http://bokeh:5006", "http://localhost:5006")
+    # Use the script in the rendered page
+    return render_template("train.html", script=script)
 
 
 # %% Results Section
-@main.route('/charts/', methods=["GET", "POST"])
+@main.route('/results/', methods=["GET", "POST"])
 @login_required
-def charts():
-    """Charts sidemenu option."""
-
-    return render_template('charts.html')
+def results():
+    """Results sidemenu option."""
+    dataset = mgr.current_dataset()
+    if dataset is None:
+        return redirect(url_for('main.datasets'))
+    # Generate session ID and obtain JavaScript from Bokeh server
+    session_id = generate_session_id()
+    script = server_session(url='http://bokeh:5006/results/',
+                            session_id=session_id)
+    # Replace Docker alias in URL with localhost
+    script = script.replace("http://bokeh:5006", "http://localhost:5006")
+    # Use the script in the rendered page
+    return render_template('results.html', script=script)
 
 
 # %% Tests Section

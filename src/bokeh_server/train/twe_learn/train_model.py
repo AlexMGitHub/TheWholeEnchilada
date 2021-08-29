@@ -1,27 +1,33 @@
-import numpy as np
+"""Train model on data according to provided hyperparameters.
 
+Performs grid search and saves grid search estimator and settings to volume.
+"""
+
+# %% Imports
+# Standard system imports
+from pathlib import Path
+
+# Related third party imports
+import joblib
+import numpy as np
 # Import models
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import LinearSVC, SVC
-
-# Scaling
+# Preprocessing, model selection, pipeline, metrics
 from sklearn.preprocessing import StandardScaler
-
-# Splitter and GridSearch
 from sklearn.model_selection import train_test_split, GridSearchCV
-
-# Pipeline
 from sklearn.pipeline import Pipeline
-
-# Metrics
 from sklearn.metrics import accuracy_score
 
+# Local application/library specific imports
 
+
+# %% Train model
 def train_model(X, y, training_settings):
-    """"""
+    """Train model and save estimator to volume."""
     # Model selection
     if training_settings['model'] == 'Gradient Boosting':
         model = GradientBoostingClassifier
@@ -52,10 +58,18 @@ def train_model(X, y, training_settings):
     # Perform grid search
     grid_search = GridSearchCV(pipe, param_grid=param_grid, n_jobs=-1)
     grid_search.fit(X_train, y_train)
+    # Save model and data to volume using joblib
+    model_filename = Path('src/bokeh_server/data/model')
+    data_filename = Path('src/bokeh_server/data/train_data')
+    with open(model_filename, 'wb') as model_file:
+        joblib.dump(grid_search, model_file)
+    with open(data_filename, 'wb') as data_file:
+        joblib.dump({'X_train': X_train,
+                     'X_test': X_test,
+                     'y_train': y_train,
+                     'y_test': y_test,
+                     'training_settings': training_settings
+                     }, data_file)
 
-    # print(grid_search.cv_results_)
-    print(grid_search.best_estimator_)
-    print(grid_search.best_score_)
-    print(grid_search.best_params_)
-    print(grid_search.score(X_test, y_test))
-    return grid_search.best_params_, grid_search.best_score_, grid_search.score(X_test, y_test)
+    return grid_search.best_params_, grid_search.best_score_, \
+        grid_search.score(X_test, y_test)

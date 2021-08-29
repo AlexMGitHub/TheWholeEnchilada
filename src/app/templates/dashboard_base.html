@@ -81,9 +81,9 @@
               </a>
             </li>
             <li class=" nav-item">
-                {% block charts_navlink %}<a class="nav-link" href={{ url_for('main.charts') }}>{% endblock charts_navlink %}
+                {% block results_navlink %}<a class="nav-link" href={{ url_for('main.results') }}>{% endblock results_navlink %}
                   <span class="bi bi-pie-chart-fill feather"></span>
-                  Charts
+                  Results
                 </a>
             </li>
             {% if config["ENV"] == "development" %}
@@ -94,12 +94,6 @@
               </a>
             </li>
             {% endif %}
-            <li class="nav-item">
-              {% block settings_navlink %}<a class="nav-link" href={{ url_for('main.settings') }}>{% endblock settings_navlink %}
-                <span class="bi bi-sliders feather"></span>
-                Settings
-              </a>
-            </li>
           </ul>
 
           {% block subsidebar %}{% endblock subsidebar %}
@@ -118,7 +112,6 @@
         {% endblock viewheader %}
 
         {% block subsection %}
-        <h2>{% block subsectiontitle %}Section title{% endblock subsectiontitle %}</h2>
         {% block subsectioncontent %}{% endblock subsectioncontent %}
         {% endblock subsection %}
       </main>
