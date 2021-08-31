@@ -1,4 +1,5 @@
 {% extends "dashboard_base.html" %}
+{% block description %}"main.datasets: Landing page that instructs user to select a dataset."{% endblock description %}
 {% block title %}Datasets - {% endblock title %}
 {% block viewname %}Datasets{% endblock viewname %}
 {% block viewheader_buttons %}
@@ -8,7 +9,7 @@
     </a>
     <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
         {% for data_name in data_names %}
-        <li><a class="dropdown-item" href={{ url_for("main.eda", dataset=data_name) }}>{{ data_name }}</a></li>
+        <li><a class="dropdown-item" href={{ url_for("main.select_dataset", dataset=data_name) }}>{{ data_name }}</a></li>
         {% endfor %}
     </ul>
 </div>

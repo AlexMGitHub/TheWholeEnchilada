@@ -71,5 +71,5 @@ def train_model(X, y, training_settings):
                      'training_settings': training_settings
                      }, data_file)
 
-    return grid_search.best_params_, grid_search.best_score_, \
+    return grid_search.best_params_, grid_search.score(X_train, y_train), \
         grid_search.score(X_test, y_test)

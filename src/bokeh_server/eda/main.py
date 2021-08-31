@@ -19,8 +19,9 @@ from pathlib import Path
 from bokeh.models import Tabs
 from bokeh.plotting import curdoc
 from bokeh_server.eda.tabs.crossfilter_class_tab import crossfilter_class_tab
-from bokeh_server.eda.tabs.summary_tab import summary_tab
+from bokeh_server.eda.tabs.features_tab import feature_importance
 from bokeh_server.eda.tabs.gridplot_tab import gridplot_tab
+from bokeh_server.eda.tabs.summary_tab import summary_tab
 
 
 # -----------------------------------------------------------------------------
@@ -54,8 +55,9 @@ marker_order = ['circle', 'square', 'plus', 'star', 'triangle', 'diamond',
 # Layout
 # -----------------------------------------------------------------------------
 tab1 = summary_tab(data, numeric_cols, metadata)
-tab2 = crossfilter_class_tab(data, numeric_cols, metadata, marker_order)
-tab3 = gridplot_tab(data, numeric_cols, metadata, marker_order)
-final_layout = Tabs(tabs=[tab1, tab2, tab3])
+tab2, top4_features = feature_importance(data, metadata)
+tab3 = crossfilter_class_tab(data, numeric_cols, metadata, marker_order)
+tab4 = gridplot_tab(data, top4_features, metadata, marker_order)
+final_layout = Tabs(tabs=[tab1, tab2, tab3, tab4])
 
 curdoc().add_root(final_layout)

@@ -36,11 +36,7 @@ def summary_tab(data, numeric_cols, metadata):
     source = ColumnDataSource(data)
     summary_list = metadata['summary']
     dataset_name = metadata['dataset']
-
-    # -------------------------------------------------------------------------
-    # Widgets
-    # -------------------------------------------------------------------------
-    div_spacer = Div(text="", width=30, height=30)
+    MARGIN = 30  # Layout margin
 
     # -------------------------------------------------------------------------
     # Data Tables
@@ -52,14 +48,13 @@ def summary_tab(data, numeric_cols, metadata):
     # -------------------------------------------------------------------------
     # Plots
     # -------------------------------------------------------------------------
-    pie_chart = create_pie_chart(data, metadata)
+    pie_chart = create_pie_chart(data, metadata, MARGIN)
     box_plots = create_box_plot(data, metadata)
 
     # -------------------------------------------------------------------------
     # Layout
     # -------------------------------------------------------------------------
-    tab_layout = row(column(box_plots, div_spacer, pie_chart),
-                     column(div_spacer),
+    tab_layout = row(column(box_plots, pie_chart),
                      column(summary_table, data_table))
 
     tab = Panel(child=tab_layout, title='Summary')

@@ -13,7 +13,6 @@ import pickle
 
 # Local application/library specific imports
 from .. import db
-# from utility.text_to_sql import IrisSQL, BostonSQL
 
 
 # %% Dataset classes
@@ -25,6 +24,7 @@ class DatasetManager:
         self.session = session
         self.datasets_path = Path('src/app/static/datasets')
         self.data_path = Path('src/bokeh_server/data/eda_data')
+        self.train_data_path = Path('src/bokeh_server/data/train_data')
         self.metadata = {
             'iris': {
                 'dataset': 'iris',
@@ -40,12 +40,21 @@ class DatasetManager:
                 'dataset': 'autompg',
                 'type': 'regression',
                 'target': 'mpg'
+            },
+            'wine': {
+                'dataset': 'wine',
+                'type': 'classification',
+                'target': 'quality'
             }
         }
 
     def current_dataset(self):
         """Return currently selected dataset."""
         return self.session.get('dataset')
+
+    def set_current_dataset(self, dataset):
+        """Set session's dataset variable."""
+        self.session['dataset'] = dataset
 
     def list_datasets_paths(self):
         """Return list of paths of available datasets."""
@@ -90,17 +99,22 @@ class DatasetManager:
         app_path = Path('src/app')
         datasets = self.list_datasets_paths()
         idx = list(range(1, len(datasets)+1))
-        data_paths = [list((self.datasets_path/x/'data').glob('*.*'))[0].
-                      relative_to(app_path) for x in datasets]
+        data_paths = [list((dpath/'data').glob('*.*'))[0].
+                      relative_to(app_path) for dpath in datasets]
         data_names = self.list_datasets_names()
-        desc_paths = [list((self.datasets_path/x/'desc').glob('*.*'))[0].
-                      relative_to(app_path) for x in datasets]
+        desc_paths = [list((dpath/'desc').glob('*.*'))[0].
+                      relative_to(app_path) for dpath in datasets]
         descrips = [x.name for x in desc_paths]
-        sql_paths = [list((self.datasets_path/x/'sql').glob('*.sql'))[0].
-                     relative_to(app_path) for x in datasets]
+        sql_paths = [list((dpath/'sql').glob('*.sql'))[0].
+                     relative_to(app_path) for dpath in datasets]
         sql_names = [x.name for x in sql_paths]
         loaded = [db.query_table_exists(x) for x in data_names]
         table_size = [db.query_table_size(x) for x in data_names]
         loaded_names = [x for x, y in zip(data_names, loaded) if y]
         return idx, data_paths, data_names, desc_paths, descrips, sql_paths, \
             sql_names, loaded, table_size, loaded_names
+
+
+if __name__ == '__main__':
+    mgr = DatasetManager({'dataset': 'iris'})
+    mgr.build_datasets_table()

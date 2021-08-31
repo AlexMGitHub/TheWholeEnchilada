@@ -3,6 +3,7 @@
 
 # Data manipulation and plotting related
 bokeh==2.3.3
+joblib==1.0.1
 pandas==1.3.1
 
 # Flask related

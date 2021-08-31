@@ -1,5 +1,5 @@
 {% extends "dashboard_base.html" %}
-{% block description %}"Dashboard homepage view"{% endblock description %}
+{% block description %}"main.index: Dashboard homepage view"{% endblock description %}
 {% block head%}
     {{ super() }}
     <!-- Custom styles for this template -->
@@ -36,7 +36,7 @@
         </div>
         <div>
           <h2>Start Training</h2>
-          <p>Select a machine learning algorithm to train on your dataset.  Tune hyperparameters and see the effects on accuracy, MSE, and confusion matrices.</p>
+          <p>Select a machine learning algorithm to train on your dataset.  Tune hyperparameters and see the effects on accuracy or MSE.</p>
           <a href={{ url_for('main.train') }} class="btn btn-primary">
             Train
           </a>
@@ -48,7 +48,7 @@
         </div>
         <div>
           <h2>View Results</h2>
-          <p>View the results using interactive charts created using Bokeh.  Adjust the chart parameters and see the results in real time.</p>
+          <p>View detailed results and plots that present the trained model's performance on both the training and the test data.</p>
           <a href={{ url_for('main.results') }} class="btn btn-primary">
             Results
           </a>

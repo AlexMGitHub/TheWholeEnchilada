@@ -7,7 +7,7 @@ then
     # Dev mode (--dev) can only accept one app at a time
     # To use dev mode, remove all but one directory from the command and add
     # --dev *after* the directory and before the other options
-    bokeh serve src/bokeh_server/eda src/bokeh_server/train src/bokeh_server/results  --address 0.0.0.0 --session-ids external-signed
+    bokeh serve src/bokeh_server/eda --dev --address 0.0.0.0 --session-ids external-signed
 else
     bokeh serve src/bokeh_server/eda src/bokeh_server/train src/bokeh_server/results --address 0.0.0.0 --session-ids external-signed
 fi

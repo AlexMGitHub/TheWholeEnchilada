@@ -33,7 +33,7 @@ def create_report_table(data_df, source, title, col_width):
     columns = [TableColumn(field=col, title=col) for col in data_df.columns]
     report_table = DataTable(
         source=source, columns=columns, sortable=False,
-        sizing_mode="scale_both", autosize_mode="fit_viewport",
-        index_position=None)
+        sizing_mode="scale_height", autosize_mode="fit_viewport", width=380,
+        index_position=None, height=200)
 
     return column(div_title, report_table)

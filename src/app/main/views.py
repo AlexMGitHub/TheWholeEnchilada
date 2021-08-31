@@ -67,6 +67,14 @@ def eda():
                            data_names=loaded_names)
 
 
+@main.route('/datasets/eda/<dataset>')
+@login_required
+def select_dataset(dataset):
+    """Set session dataset variable and redirect user to EDA page."""
+    mgr.set_current_dataset(dataset)
+    return redirect(url_for('main.eda'))
+
+
 @main.route('/datasets/load/')
 @login_required
 def load_datasets():
@@ -101,7 +109,7 @@ def load_sql(name, datatype, data):
         return
     sql_path = Path(f'static/datasets/{name}/{datatype}/{data}')
     db.create_table(sql_path)
-    return redirect(url_for('main.datasets'))
+    return redirect(url_for('main.load_datasets'))
 
 
 # %% Train Section
@@ -110,7 +118,7 @@ def load_sql(name, datatype, data):
 def train():
     """Load Bokeh training visualization to train model."""
     dataset = mgr.current_dataset()
-    if dataset is None:
+    if dataset is None or not mgr.data_path.exists():
         return redirect(url_for('main.datasets'))
     # Generate session ID and obtain JavaScript from Bokeh server
     session_id = generate_session_id()
@@ -128,8 +136,10 @@ def train():
 def results():
     """Results sidemenu option."""
     dataset = mgr.current_dataset()
-    if dataset is None:
+    if dataset is None:  # Make sure user has selected a dataset
         return redirect(url_for('main.datasets'))
+    if not mgr.train_data_path.exists():  # Make sure user has trained a model
+        return redirect(url_for('main.train'))
     # Generate session ID and obtain JavaScript from Bokeh server
     session_id = generate_session_id()
     script = server_session(url='http://bokeh:5006/results/',
@@ -194,16 +204,3 @@ def test_reports(report):
         page_name = None
     return render_template("test_reports.html", url=url,
                            page_name=page_name)
-
-
-# %% Temporary routes
-@main.route('/utility/<data>')
-# @login_required
-def convert_sql(data):
-    """Convert text file to SQL create table commands."""
-    if data == 'iris':
-        iris_sql = IrisSQL().iris_to_sql()
-        return f'<h1>{iris_sql}</h1>'
-    elif data == 'boston':
-        boston_sql = BostonSQL().boston_to_sql()
-        return f'<h1>{boston_sql}</h1>'

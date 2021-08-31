@@ -82,3 +82,44 @@ class BostonSQL:
                     prev_line = line
                 sql.write(self.format_boston_line(line, idx+2, last_line=True))
         return self.boston_sql
+
+
+class WineSQL():
+    """Class to convert the Wine dataset to an SQL file."""
+
+    def __init__(self):
+        """Define paths to Wine files."""
+        wine = Path('src/app/static/datasets/wine')
+        self.wine_sql = list((wine / 'sql').glob('*.sql'))[0]
+        self.wine_template = list((wine / 'template').glob('*.sql'))[0]
+        self.wine_data = list((wine / 'data').glob('*.txt'))[0]
+        self.wine_desc = list((wine / 'desc').glob('*.txt'))[0]
+
+    def format_wine_line(self, line, idx, last_line=False):
+        """Reformat line from Wine text file as SQL-formatted values."""
+        v = line.split(';')         # Split line using semicolon delimiter
+        v[-1] = f"'{v[-1].rstrip()}'"  # Represent quality score as a string
+        if last_line:
+            punctuation = ';'       # Last line of query requires semi-colon
+        else:
+            punctuation = ',\n'     # Item in list requires comma and newline
+        return f"({idx}, " + ', '.join(v).rstrip() + f"){punctuation}"
+
+    def wine_to_sql(self):
+        """Merge Wine SQL template with formatted text data."""
+        with open(self.wine_sql, 'w') as sql:
+            with open(self.wine_template, 'r') as template_file:
+                template = template_file.read()
+            sql.write(template)
+            with open(self.wine_data, 'r') as text_file:
+                prev_line = text_file.readline()
+                for idx, line in enumerate(text_file):
+                    sql.write(self.format_wine_line(prev_line, idx+1))
+                    prev_line = line
+                sql.write(self.format_wine_line(line, idx+2, last_line=True))
+        return self.wine_sql
+
+
+if __name__ == '__main__':
+    wine = WineSQL()
+    wine.wine_to_sql()

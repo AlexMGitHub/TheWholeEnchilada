@@ -19,7 +19,7 @@ import numpy as np
 
 
 # %% Create pie chart
-def create_pie_chart(data, metadata):
+def create_pie_chart(data, metadata, MARGIN):
     """Create pie chart plot."""
     # -------------------------------------------------------------------------
     # Setup
@@ -50,7 +50,8 @@ def create_pie_chart(data, metadata):
     p = figure(plot_height=350, title="Class Distribution",
                toolbar_location=None, tools="hover",
                tooltips="@classes: @counts", x_range=(-0.5, 1.0),
-               output_backend="webgl", sizing_mode="scale_both")
+               output_backend="webgl", sizing_mode="scale_both",
+               margin=(MARGIN, MARGIN, 0, 0))
 
     p.wedge(x=0, y=1, radius=0.4,
             start_angle=cumsum('angle', include_zero=True),

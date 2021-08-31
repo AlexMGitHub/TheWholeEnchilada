@@ -12,7 +12,6 @@ Columns:
 
 # %% Imports
 # Standard system imports
-import pandas as pd
 from pathlib import Path
 import pickle
 
@@ -21,6 +20,8 @@ from bokeh.io import curdoc
 from bokeh.layouts import column, row
 from bokeh.models import Button, CheckboxGroup, Div, RangeSlider, Select, \
     Slider
+import numpy as np
+import pandas as pd
 
 # Local application/library specific imports
 from bokeh_server.train.twe_learn.train_model import train_model
@@ -56,7 +57,7 @@ MODEL_WIDTH = 300
 HYPERPARAMS_WIDTH = 300
 TRAIN_WIDTH = 400
 MARGIN = 15
-COL_HEIGHT = 400
+COL_HEIGHT = 500
 
 
 # -----------------------------------------------------------------------------
@@ -118,33 +119,26 @@ hp_title = Div(  # Title for hyperparameters column
             <h1 class="bokeh_header">Hyperparameters</h1>
         </div>
     </div>""", height=50)
-# Define list of hyperparameters used by models
-hp_list = ['C', 'max_depth', 'n_neighbors',
-           'learning_rate', 'max_iter', 'n_estimators', 'n_neighbors']
-c_steps = 'tbd'
-# Define range sliders
+# Define range sliders for hyperparameter
 c_range_slider = RangeSlider(
-    start=0, end=100, value=(1, 90), step=10, title="C",
+    start=0.1, end=100.1, value=(0.1, 100.1), step=10, title="C",
     disabled=False, bar_color='#3FB8AF', visible=True, name='C')
 learning_rate_range_slider = RangeSlider(
-    start=0, end=100, value=(1, 90), step=10, title="learning_rate",
+    start=0.1, end=1, value=(0.1, 1), step=0.1, title="learning_rate",
     disabled=True, visible=False, name='learning_rate')
 max_depth_range_slider = RangeSlider(
-    start=0, end=100, value=(1, 90), step=10, title="max_depth",
+    start=3, end=10, value=(3, 10), step=1, title="max_depth",
     disabled=True, visible=False, name='max_depth')
-max_iter_range_slider = RangeSlider(
-    start=0, end=100, value=(1, 90), step=10, title="max_iter",
-    disabled=True, visible=False, name='max_iter')
 n_estimators_range_slider = RangeSlider(
-    start=0, end=100, value=(1, 90), step=10, title="n_estimators",
+    start=50, end=250, value=(50, 250), step=50, title="n_estimators",
     disabled=True, visible=False, name='n_estimators')
 n_neighbors_range_slider = RangeSlider(
-    start=0, end=100, value=(1, 90), step=10, title="n_neighbors",
+    start=3, end=10, value=(3, 10), step=1, title="n_neighbors",
     disabled=True, visible=False, name='n_neighbors')
 # Add hyperparameter title and range sliders to column
 hp_sliders = (c_range_slider, learning_rate_range_slider,
-              max_depth_range_slider, max_iter_range_slider,
-              n_estimators_range_slider, n_neighbors_range_slider)
+              max_depth_range_slider, n_estimators_range_slider,
+              n_neighbors_range_slider)
 hyperparams = column(hp_title, *hp_sliders,
                      width=HYPERPARAMS_WIDTH, height=COL_HEIGHT,
                      background="#e8e8e8",
@@ -175,7 +169,7 @@ train_title = Div(  # Title for train column
     </div>""", height=50)
 # Define div to contain status information
 status_div = Div(text="""<b>Ready to train...</b>""",
-                 height=250)
+                 height=375)
 # Define train button and add to column with title and status divs
 train_button = Button(label="Train", button_type="primary")
 train = column(train_title, status_div, train_button, width=TRAIN_WIDTH,
@@ -223,20 +217,24 @@ def train_button_press(event):
 def run_training():
     """Fit machine learning pipeline based on selected parameters."""
     training_settings = {
+        'dataset': dataset,
         'features': [LABELS[x] for x in features_checkbox_group.active],
         'model': model_select.value,
         'train_split': train_split_slider.value,
-        'params': [(x.name, list(range(x.value[0], x.value[1], x.step)))
+        'params': [(x.name, list(np.arange(x.value[0], x.value[1]+x.step,
+                                           x.step)))
                    for x in enabled_hp_sliders[model_select.value]]
     }
-    (text1, text2, text3) = train_model(
+    (params, train_score, test_score) = train_model(
         X[training_settings['features']], y, training_settings)
     text = '<b>Settings:</b><br>'
     for key, val in training_settings.items():
         text += f"{key}: {val}<br>"
     text += "<br><b>Results:</b><br>" + \
-        str(text1) + '<br>' + str(text2) + '<br>' + str(text3)
-    status_div.text += text + "<br><br><b>Training complete!</b>"
+        str(params) + '<br>' + \
+        f'<b>Train Score:</b> {train_score:.2f}' + '<br>' + \
+        f'<b>Test Score:</b> {test_score:.2f}' + '<br>'
+    status_div.text += text + "<br><b>Training complete!</b>"
 
 
 features_checkbox_group.on_change('active', features_change)
