@@ -21,11 +21,12 @@ from bokeh.layouts import column
 
 
 # %% Define tables
-def data_tables(data, data_cols, source, summary_list, dataset_name, metadata):
+def data_tables(data, source, summary_list, dataset_name, metadata):
     """Return data tables summarizing dataset."""
     # -------------------------------------------------------------------------
     # Setup
     # -------------------------------------------------------------------------
+    ml_type = metadata['type']
     # Parse summary dictionary and use it to create a ColumnDataSource
     row_labels = ['Data Type', 'Count', 'Mean', 'STD', 'Min', '25%',
                   '50%', '75%', 'Max']
@@ -83,8 +84,14 @@ def data_tables(data, data_cols, source, summary_list, dataset_name, metadata):
 
     # Data table containing all rows and columns of dataset
     columns = [TableColumn(field=col, title=col) for col in data.keys()]
-    data_table = DataTable(
-        source=source, columns=columns, sortable=True,
-        sizing_mode='stretch_width', autosize_mode="fit_viewport")
+    if ml_type == 'classification':
+        data_table = DataTable(
+            source=source, columns=columns, sortable=True,
+            sizing_mode='stretch_width', autosize_mode="fit_viewport")
+    elif ml_type == 'regression':
+        data_table = DataTable(
+            source=source, columns=columns, sortable=True,
+            sizing_mode='stretch_width', autosize_mode="fit_viewport",
+            height=275)
 
     return column(summary_title, summary_table), column(data_title, data_table)

@@ -11,11 +11,13 @@ from pathlib import Path
 import joblib
 import numpy as np
 # Import models
-from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
-from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import GradientBoostingClassifier, \
+    GradientBoostingRegressor, RandomForestClassifier, RandomForestRegressor
+from sklearn.linear_model import LogisticRegression, LinearRegression, Lasso, \
+    Ridge
 from sklearn.naive_bayes import GaussianNB
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.svm import LinearSVC, SVC
+from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
+from sklearn.svm import LinearSVC, SVC, SVR, LinearSVR
 # Preprocessing, model selection, pipeline, metrics
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split, GridSearchCV
@@ -29,20 +31,36 @@ from sklearn.metrics import accuracy_score
 def train_model(X, y, training_settings):
     """Train model and save estimator to volume."""
     # Model selection
-    if training_settings['model'] == 'Gradient Boosting':
+    if training_settings['model'] == 'Gradient Boosting CLF':
         model = GradientBoostingClassifier
-    elif training_settings['model'] == 'K-Nearest Neighbors':
+    elif training_settings['model'] == 'Gradient Boosting REG':
+        model = GradientBoostingRegressor
+    elif training_settings['model'] == 'K-Nearest Neighbors CLF':
         model = KNeighborsClassifier
+    elif training_settings['model'] == 'K-Nearest Neighbors REG':
+        model = KNeighborsRegressor
     elif training_settings['model'] == 'Logistic Regression':
         model = LogisticRegression
+    elif training_settings['model'] == 'Linear Regression':
+        model = LinearRegression
+    elif training_settings['model'] == 'Lasso Regression':
+        model = Lasso
+    elif training_settings['model'] == 'Ridge Regression':
+        model = Ridge
     elif training_settings['model'] == 'Naive Bayes':
         model = GaussianNB
-    elif training_settings['model'] == 'Random Forest':
+    elif training_settings['model'] == 'Random Forest CLF':
         model = RandomForestClassifier
+    elif training_settings['model'] == 'Random Forest REG':
+        model = RandomForestRegressor
     elif training_settings['model'] == 'SVC (linear kernel)':
         model = LinearSVC
     elif training_settings['model'] == 'SVC (rbf kernel)':
         model = SVC
+    elif training_settings['model'] == 'SVR (linear kernel)':
+        model = LinearSVR
+    elif training_settings['model'] == 'SVR (rbf kernel)':
+        model = SVR
     # Define hyperparameters used for GridSearch
     param_grid = {f'model__{x[0]}': x[1] for x in training_settings['params']}
     # Define pipeline

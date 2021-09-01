@@ -46,7 +46,8 @@ target = metadata['target']
 id_col = dataset + '_id'
 del data[id_col]
 data_cols = list(data.keys())
-numeric_cols = [x for x in data_cols if type(data[x][0]) in (float, int)]
+numeric_cols = [x for x in data_cols if type(data[x][0]) in (float, int)
+                and x != target]
 data_df = pd.DataFrame.from_dict(data)
 X = data_df[numeric_cols]
 y = data_df[target]
@@ -96,10 +97,19 @@ model_title = Div(  # Title for model column
             <h1 class="bokeh_header">Model</h1>
         </div>
     </div>""", height=50)
-MODELS = ['Gradient Boosting', 'K-Nearest Neighbors', 'Logistic Regression',
-          'Naive Bayes', 'Random Forest', 'SVC (linear kernel)',
-          'SVC (rbf kernel)']
-model_select = Select(title="Model Type:", value='Logistic Regression',
+if ml_type == 'classification':
+    default_model = 'Logistic Regression'
+    MODELS = ['Gradient Boosting CLF', 'K-Nearest Neighbors CLF',
+              'Logistic Regression', 'Naive Bayes', 'Random Forest CLF',
+              'SVC (linear kernel)', 'SVC (rbf kernel)']
+elif ml_type == 'regression':
+    default_model = 'Linear Regression'
+    MODELS = ['Gradient Boosting REG', 'K-Nearest Neighbors REG',
+              'Linear Regression', 'Lasso Regression', 'Ridge Regression',
+              'Random Forest REG', 'SVR (linear kernel)',
+              'SVR (rbf kernel)']
+
+model_select = Select(title="Model Type:", value=default_model,
                       options=MODELS)
 train_split_slider = Slider(start=0.05, end=0.95, value=0.80,
                             step=.05, title="Train Split", bar_color="#3FB8AF")
@@ -119,10 +129,22 @@ hp_title = Div(  # Title for hyperparameters column
             <h1 class="bokeh_header">Hyperparameters</h1>
         </div>
     </div>""", height=50)
+# Define default model
+if ml_type == 'classification':
+    clf_default = False
+    reg_default = True
+elif ml_type == 'regression':
+    clf_default = True
+    reg_default = False
 # Define range sliders for hyperparameter
+alpha_range_slider = RangeSlider(
+    start=0.1, end=100.1, value=(0.1, 100.1), step=10, title="alpha",
+    disabled=reg_default, bar_color='#3FB8AF', visible=not reg_default,
+    name='alpha')
 c_range_slider = RangeSlider(
     start=0.1, end=100.1, value=(0.1, 100.1), step=10, title="C",
-    disabled=False, bar_color='#3FB8AF', visible=True, name='C')
+    disabled=clf_default, bar_color='#3FB8AF', visible=not clf_default,
+    name='C')
 learning_rate_range_slider = RangeSlider(
     start=0.1, end=1, value=(0.1, 1), step=0.1, title="learning_rate",
     disabled=True, visible=False, name='learning_rate')
@@ -136,7 +158,7 @@ n_neighbors_range_slider = RangeSlider(
     start=3, end=10, value=(3, 10), step=1, title="n_neighbors",
     disabled=True, visible=False, name='n_neighbors')
 # Add hyperparameter title and range sliders to column
-hp_sliders = (c_range_slider, learning_rate_range_slider,
+hp_sliders = (alpha_range_slider, c_range_slider, learning_rate_range_slider,
               max_depth_range_slider, n_estimators_range_slider,
               n_neighbors_range_slider)
 hyperparams = column(hp_title, *hp_sliders,
@@ -145,14 +167,25 @@ hyperparams = column(hp_title, *hp_sliders,
                      margin=(0, MARGIN, 0, MARGIN))
 # Dictionary cross-referencing model to applicable hyperparameter sliders
 enabled_hp_sliders = {
-    'Gradient Boosting': [learning_rate_range_slider,
-                          n_estimators_range_slider, max_depth_range_slider],
-    'K-Nearest Neighbors': [n_neighbors_range_slider],
+    'Gradient Boosting CLF': [learning_rate_range_slider,
+                              n_estimators_range_slider,
+                              max_depth_range_slider],
+    'Gradient Boosting REG': [learning_rate_range_slider,
+                              n_estimators_range_slider,
+                              max_depth_range_slider],
+    'K-Nearest Neighbors CLF': [n_neighbors_range_slider],
+    'K-Nearest Neighbors REG': [n_neighbors_range_slider],
     'Logistic Regression': [c_range_slider],
+    'Linear Regression': [],
+    'Lasso Regression': [alpha_range_slider],
+    'Ridge Regression': [alpha_range_slider],
     'Naive Bayes': [],
-    'Random Forest': [n_estimators_range_slider, max_depth_range_slider],
+    'Random Forest CLF': [n_estimators_range_slider, max_depth_range_slider],
+    'Random Forest REG': [n_estimators_range_slider, max_depth_range_slider],
     'SVC (linear kernel)': [c_range_slider],
-    'SVC (rbf kernel)': [c_range_slider]
+    'SVR (linear kernel)': [c_range_slider],
+    'SVC (rbf kernel)': [c_range_slider],
+    'SVR (rbf kernel)': [c_range_slider]
 }
 
 

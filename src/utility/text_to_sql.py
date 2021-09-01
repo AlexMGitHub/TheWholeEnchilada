@@ -1,12 +1,19 @@
 """Collection of classes to convert data in text files to SQL files.
 
 Classes:
+    -   AutoMPGSQL: Class to convert the AutoMPG dataset to an SQL file.
+
+    -   BostonSQL: Class to convert the Boston dataset to an SQL file.
+
     -   IrisSQL: Class to convert the Iris dataset to an SQL file.
+
+    -   WineSQL: Class to convert the Wine dataset to an SQL file.
 """
 
 # %% Imports
 # Standard system imports
 from pathlib import Path
+import re
 
 # Related third party imports
 
@@ -14,12 +21,88 @@ from pathlib import Path
 
 
 # %% Text to SQL classes
+class AutoMPGSQL:
+    """Class to convert the AutoMPG dataset to an SQL file."""
+
+    def __init__(self):
+        """Define paths to AutoMPG files."""
+        autompg = Path('src/app/static/datasets/autompg')
+        self.autompg_sql = list((autompg / 'sql').glob('*.sql'))[0]
+        self.autompg_template = list((autompg / 'template').glob('*.sql'))[0]
+        self.autompg_data = list((autompg / 'data').glob('*.txt'))[0]
+        self.autompg_desc = list((autompg / 'desc').glob('*.txt'))[0]
+
+    def format_autompg_line(self, line, idx, last_line=False):
+        """Reformat line from AutoMPG text file as SQL-formatted values."""
+        if last_line:
+            punctuation = ';'       # Last line of query requires semi-colon
+        else:
+            punctuation = ',\n'     # Item in list requires comma and newline
+        pattern = r'(.+)(\".+\")'
+        result = re.match(pattern, line)
+        vals = result.group(1).strip()          # Numeric values in line
+        vals = re.sub(r"\s+", ",", vals)        # Replace whitespace w/ commas
+        v = vals.split(',')  # Split line using comma delimiter
+        car_name = result.group(2)              # Name of car in
+        car_name = car_name.replace('"', "'")   # Use single quotes for string
+        return f"({idx}, " + ', '.join(v) + f", {car_name}){punctuation}"
+
+    def autompg_to_sql(self):
+        """Merge AutoMPG SQL template with formatted text data."""
+        with open(self.autompg_sql, 'w') as sql:
+            with open(self.autompg_template, 'r') as template_file:
+                template = template_file.read()
+            sql.write(template)
+            with open(self.autompg_data, 'r') as text_file:
+                prev_line = text_file.readline()
+                for idx, line in enumerate(text_file):
+                    sql.write(self.format_autompg_line(prev_line, idx+1))
+                    prev_line = line
+                sql.write(self.format_autompg_line(
+                    line, idx+2, last_line=True))
+        return self.autompg_sql
+
+
+class BostonSQL:
+    """Class to convert the Boston dataset to an SQL file."""
+
+    def __init__(self):
+        """Define paths to Boston files."""
+        boston = Path('src/app/static/datasets/boston')
+        self.boston_sql = list((boston / 'sql').glob('*.sql'))[0]
+        self.boston_template = list((boston / 'template').glob('*.sql'))[0]
+        self.boston_data = list((boston / 'data').glob('*.txt'))[0]
+        self.boston_desc = list((boston / 'desc').glob('*.txt'))[0]
+
+    def format_boston_line(self, line, idx, last_line=False):
+        """Reformat line from Boston text file as SQL-formatted values."""
+        if last_line:
+            punctuation = ';'       # Last line of query requires semi-colon
+        else:
+            punctuation = ',\n'     # Item in list requires comma and newline
+        return f"({idx},{line.rstrip()}){punctuation}"
+
+    def boston_to_sql(self):
+        """Merge Boston SQL template with formatted text data."""
+        with open(self.boston_sql, 'w') as sql:
+            with open(self.boston_template, 'r') as template_file:
+                template = template_file.read()
+            sql.write(template)
+            with open(self.boston_data, 'r') as text_file:
+                prev_line = text_file.readline()
+                for idx, line in enumerate(text_file):
+                    sql.write(self.format_boston_line(prev_line, idx+1))
+                    prev_line = line
+                sql.write(self.format_boston_line(line, idx+2, last_line=True))
+        return self.boston_sql
+
+
 class IrisSQL:
     """Class to convert the Iris dataset to an SQL file."""
 
     def __init__(self):
         """Define paths to Iris files."""
-        iris = Path('/twe/src/app/static/datasets/iris')
+        iris = Path('src/app/static/datasets/iris')
         self.iris_sql = list((iris / 'sql').glob('*.sql'))[0]
         self.iris_template = list((iris / 'template').glob('*.sql'))[0]
         self.iris_data = list((iris / 'data').glob('*.txt'))[0]
@@ -48,40 +131,6 @@ class IrisSQL:
                     prev_line = line
                 sql.write(self.format_iris_line(line, idx+2, last_line=True))
         return self.iris_sql
-
-
-class BostonSQL:
-    """Class to convert the Boston dataset to an SQL file."""
-
-    def __init__(self):
-        """Define paths to Boston files."""
-        boston = Path('/twe/src/app/static/datasets/boston')
-        self.boston_sql = list((boston / 'sql').glob('*.sql'))[0]
-        self.boston_template = list((boston / 'template').glob('*.sql'))[0]
-        self.boston_data = list((boston / 'data').glob('*.txt'))[0]
-        self.boston_desc = list((boston / 'desc').glob('*.txt'))[0]
-
-    def format_boston_line(self, line, idx, last_line=False):
-        """Reformat line from Boston text file as SQL-formatted values."""
-        if last_line:
-            punctuation = ';'       # Last line of query requires semi-colon
-        else:
-            punctuation = ',\n'     # Item in list requires comma and newline
-        return f"({idx},{line.rstrip()}){punctuation}"
-
-    def boston_to_sql(self):
-        """Merge Boston SQL template with formatted text data."""
-        with open(self.boston_sql, 'w') as sql:
-            with open(self.boston_template, 'r') as template_file:
-                template = template_file.read()
-            sql.write(template)
-            with open(self.boston_data, 'r') as text_file:
-                prev_line = text_file.readline()
-                for idx, line in enumerate(text_file):
-                    sql.write(self.format_boston_line(prev_line, idx+1))
-                    prev_line = line
-                sql.write(self.format_boston_line(line, idx+2, last_line=True))
-        return self.boston_sql
 
 
 class WineSQL():
@@ -121,5 +170,5 @@ class WineSQL():
 
 
 if __name__ == '__main__':
-    wine = WineSQL()
-    wine.wine_to_sql()
+    auto = AutoMPGSQL()
+    auto.autompg_to_sql()

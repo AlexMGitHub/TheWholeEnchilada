@@ -19,17 +19,18 @@ Data Tables:
 
 # Related third party imports
 from bokeh.layouts import row, column
-from bokeh.models import ColumnDataSource, Div, Panel
+from bokeh.models import ColumnDataSource, Panel
 
 # Local application/library specific imports
-from bokeh_server.eda.tabs.box_plot import create_box_plot
+from bokeh_server.eda.tabs.box_plot import create_box_plot, create_reg_box_plot
 from bokeh_server.eda.tabs.data_tables import data_tables
 from bokeh_server.eda.tabs.pie_chart import create_pie_chart
+from numpy.core import numeric
 
 
 # %% Define tab
-def summary_tab(data, numeric_cols, metadata):
-    """Return data tables summarizing dataset."""
+def summary_cls(data, c, metadata):
+    """Return data tables summarizing dataset for classification problems."""
     # -------------------------------------------------------------------------
     # Setup
     # -------------------------------------------------------------------------
@@ -41,9 +42,8 @@ def summary_tab(data, numeric_cols, metadata):
     # -------------------------------------------------------------------------
     # Data Tables
     # -------------------------------------------------------------------------
-    summary_table, data_table = data_tables(data, numeric_cols, source,
-                                            summary_list, dataset_name,
-                                            metadata)
+    summary_table, data_table = data_tables(data, source, summary_list,
+                                            dataset_name, metadata)
 
     # -------------------------------------------------------------------------
     # Plots
@@ -57,6 +57,38 @@ def summary_tab(data, numeric_cols, metadata):
     tab_layout = row(column(box_plots, pie_chart),
                      column(summary_table, data_table))
 
+    tab = Panel(child=tab_layout, title='Summary')
+
+    return tab
+
+
+def summary_reg(data, numeric_cols, metadata):
+    """Return data tables summarizing dataset for regression problems."""
+    # -------------------------------------------------------------------------
+    # Setup
+    # -------------------------------------------------------------------------
+    source = ColumnDataSource(data)
+    summary_list = metadata['summary']
+    dataset_name = metadata['dataset']
+    MARGIN = 30  # Layout margin
+
+    # -------------------------------------------------------------------------
+    # Data Tables
+    # -------------------------------------------------------------------------
+    summary_table, data_table = data_tables(data, source,
+                                            summary_list, dataset_name,
+                                            metadata)
+
+    # -------------------------------------------------------------------------
+    # Plots
+    # -------------------------------------------------------------------------
+    box_plots = create_reg_box_plot(data, metadata, numeric_cols)
+
+    # -------------------------------------------------------------------------
+    # Layout
+    # -------------------------------------------------------------------------
+    tab_layout = column(row(summary_table, data_table),
+                        row(box_plots))
     tab = Panel(child=tab_layout, title='Summary')
 
     return tab

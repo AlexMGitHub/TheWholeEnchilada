@@ -32,7 +32,7 @@ import pandas as pd
 
 
 # %% Define tab
-def crossfilter_class_tab(data, numeric_cols, metadata, marker_order):
+def crossfilter_cls(data, numeric_cols, metadata, marker_order):
     """Return a plot with selectable axes and marker properties."""
     # -------------------------------------------------------------------------
     # Setup
@@ -79,7 +79,10 @@ def crossfilter_class_tab(data, numeric_cols, metadata, marker_order):
     # Plots
     # -------------------------------------------------------------------------
     def create_plot(x, y):
-        """Create Crossfilter scatter plot."""
+        """Create Crossfilter scatter plot.
+
+        Returns plot intended for classification problems.
+        """
         group_by_size()
         scatter_plot = figure(title=f'{y.title()} vs. {x.title()}',
                               height=800, width=1000,
@@ -129,7 +132,8 @@ def crossfilter_class_tab(data, numeric_cols, metadata, marker_order):
         if selectsize.value == 'None':
             source.data["marker_sizes"] = [DEFAULT_MARKER_SIZE] * NUM_ROWS
         else:
-            groups = pd.qcut(data[selectsize.value], N_SIZES, labels=False)
+            groups = pd.qcut(data[selectsize.value], N_SIZES, labels=False,
+                             duplicates='drop')
             source.data["marker_sizes"] = [SIZES[x] for x in groups]
 
     def selectx_change(attrname, old, new):
@@ -171,6 +175,158 @@ def crossfilter_class_tab(data, numeric_cols, metadata, marker_order):
     plot = create_plot(numeric_cols[0], numeric_cols[1])
     tab_layout = row(column(selectx, selecty, selectsize, sizing_mode="fixed",
                             height=250, width=200), plot)
+    tab = Panel(child=tab_layout, title='Crossfilter')
+
+    return tab
+
+
+def crossfilter_reg(data, numeric_cols, metadata, marker_order):
+    """Return a plot with selectable axes and marker properties.
+
+    Returns plot intended for regression problems.
+    """
+    # -------------------------------------------------------------------------
+    # Setup
+    # -------------------------------------------------------------------------
+    # Define color map
+    if len(numeric_cols) <= 10:
+        colors = Category10[len(numeric_cols)]
+    elif len(numeric_cols) <= 20:
+        colors = Category20[len(numeric_cols)]
+    else:
+        color_idx = np.linspace(0, len(Turbo256), num=len(numeric_cols),
+                                endpoint=False, dtype=int)
+        colors = [Turbo256[x] for x in color_idx]
+
+    # Define constants
+    MARKER = marker_order[0]
+    SIZES = list(range(6, 22, 3))  # Range of marker sizes
+    N_SIZES = len(SIZES)
+    DEFAULT_MARKER_SIZE = 12
+    NUM_ROWS = len(data[numeric_cols[0]])  # Number of rows in dataset
+    DEFAULT_MARKER_COLOR = colors[0]
+    N_COLORS = len(colors)
+
+    # Add marker size and color fields to source
+    source = ColumnDataSource(data)
+    source.data["marker_sizes"] = [DEFAULT_MARKER_SIZE] * NUM_ROWS
+    source.data["marker_colors"] = [DEFAULT_MARKER_COLOR] * NUM_ROWS
+
+    # -------------------------------------------------------------------------
+    # Widgets
+    # -------------------------------------------------------------------------
+    selectx = Select(title="X-Axis:", value=numeric_cols[0],
+                     options=[numeric_cols[0]]+numeric_cols[2:],
+                     sizing_mode="stretch_width")
+    selecty = Select(title="Y-Axis:", value=numeric_cols[1],
+                     options=numeric_cols[1:],
+                     sizing_mode="stretch_width")
+    selectcolor = Select(title="Color", value='None',
+                         options=['None']+numeric_cols[2:],
+                         sizing_mode="stretch_width")
+    selectsize = Select(title="Size", value='None',
+                        options=['None']+numeric_cols[2:],
+                        sizing_mode="stretch_width")
+
+    # -------------------------------------------------------------------------
+    # Plots
+    # -------------------------------------------------------------------------
+    def create_plot(x, y):
+        """Create Crossfilter scatter plot."""
+        group_by_size()
+        group_by_color()
+        scatter_plot = figure(title=f'{y.title()} vs. {x.title()}',
+                              height=800, width=1000,
+                              sizing_mode="scale_width",
+                              max_width=1000, output_backend="webgl",
+                              background_fill_color="#DDDDDD",
+                              outline_line_color="white",
+                              toolbar_location="above")
+        scatter_plot.scatter(x=x, y=y, color='marker_colors', source=source,
+                             fill_alpha=0.4, marker=MARKER,
+                             size='marker_sizes')
+        # Style scatter plot
+        scatter_plot.grid.grid_line_dash = [6, 4]
+        scatter_plot.grid.grid_line_color = "white"
+        scatter_plot.axis.major_label_text_font_size = "1em"
+        scatter_plot.axis.major_label_text_font_style = "bold"
+        scatter_plot.axis.axis_label_text_font_size = "1em"
+        scatter_plot.axis.axis_label_text_font_style = "bold"
+        # Add axis titles
+        scatter_plot.xaxis.axis_label = x.title()
+        scatter_plot.yaxis.axis_label = y.title()
+        return scatter_plot
+
+    # -------------------------------------------------------------------------
+    # Callbacks
+    # -------------------------------------------------------------------------
+    def nix(vals, lst):
+        """Return list omitting specified values."""
+        return [x for x in lst if x not in vals]
+
+    def group_by_color():
+        """Define marker colors according to selectcolor dropdown menu."""
+        if selectcolor.value == 'None':
+            source.data["marker_colors"] = [DEFAULT_MARKER_COLOR] * NUM_ROWS
+        else:
+            groups = pd.qcut(data[selectcolor.value], N_COLORS, labels=False,
+                             duplicates='drop')
+            source.data["marker_colors"] = [colors[x] for x in groups]
+
+    def group_by_size():
+        """Define marker sizes according to selectsize dropdown menu."""
+        if selectsize.value == 'None':
+            source.data["marker_sizes"] = [DEFAULT_MARKER_SIZE] * NUM_ROWS
+        else:
+            groups = pd.qcut(data[selectsize.value], N_SIZES, labels=False,
+                             duplicates='drop')
+            source.data["marker_sizes"] = [SIZES[x] for x in groups]
+
+    def selectx_change(attrname, old, new):
+        """Callback for selectx dropdown menu to change X-axis values."""
+        selecty.options = nix([new], numeric_cols)
+        selectsize.options = ['None'] + nix([new, selecty.value], numeric_cols)
+        if selectsize.value not in selectsize.options:
+            selectsize.value = 'None'
+        plot = create_plot(new, selecty.value)
+        plot.xaxis.axis_label = selectx.value
+        update(plot)
+
+    def selecty_change(attrname, old, new):
+        """Callback for selecty dropdown menu to change Y-axis values."""
+        selectx.options = nix([new], numeric_cols)
+        selectsize.options = ['None'] + nix([new, selectx.value], numeric_cols)
+        if selectsize.value not in selectsize.options:
+            selectsize.value = 'None'
+        plot = create_plot(selectx.value, new)
+        plot.yaxis.axis_label = selecty.value
+        update(plot)
+
+    def selectcolor_change(attrname, old, new):
+        """Callback for selectcolor dropdown menu to change marker colors."""
+        plot = create_plot(selectx.value, selecty.value)
+        update(plot)
+
+    def selectsize_change(attrname, old, new):
+        """Callback for selectsize dropdown menu to change size of markers."""
+        plot = create_plot(selectx.value, selecty.value)
+        update(plot)
+
+    def update(plot):
+        """Update layout with new Crossfilter scatterplot."""
+        tab_layout.children[1] = plot
+
+    selectx.on_change('value', selectx_change)
+    selecty.on_change('value', selecty_change)
+    selectcolor.on_change('value', selectcolor_change)
+    selectsize.on_change('value', selectsize_change)
+
+    # -------------------------------------------------------------------------
+    # Layout
+    # -------------------------------------------------------------------------
+    plot = create_plot(numeric_cols[0], numeric_cols[1])
+    tab_layout = row(column(selectx, selecty, selectcolor, selectsize,
+                            sizing_mode="fixed", height=250, width=200), plot)
     tab = Panel(child=tab_layout, title='Crossfilter')
 
     return tab

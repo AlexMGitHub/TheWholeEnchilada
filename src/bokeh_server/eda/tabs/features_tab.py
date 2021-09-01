@@ -19,7 +19,8 @@ from bokeh.palettes import Category10, Category20, Turbo256
 from bokeh.plotting import figure
 import numpy as np
 import pandas as pd
-from sklearn.feature_selection import mutual_info_classif
+from sklearn.feature_selection import mutual_info_classif, \
+    mutual_info_regression
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 
@@ -27,15 +28,19 @@ from sklearn.preprocessing import StandardScaler
 
 
 # %% Define tab
-def feature_importance(data, metadata):
+def feature_importance(data, metadata, numeric_cols):
     """Return plots describing importance of data features."""
     # -------------------------------------------------------------------------
     # Functions
     # -------------------------------------------------------------------------
-    def make_mi_scores(X, y):
+    def make_mi_scores(X, y, ml_type):
         """From Ryan Holbrook's feature engineering course on Kaggle."""
         disc_feats = X.dtypes == int
-        mi_scores = mutual_info_classif(X, y, discrete_features=disc_feats)
+        if ml_type == 'classification':
+            mi_scores = mutual_info_classif(X, y, discrete_features=disc_feats)
+        elif ml_type == 'regression':
+            mi_scores = mutual_info_regression(X, y,
+                                               discrete_features=disc_feats)
         mi_scores = pd.Series(mi_scores, name="MI Scores", index=X.columns)
         mi_scores = mi_scores.sort_values(ascending=True)
         return mi_scores
@@ -60,11 +65,14 @@ def feature_importance(data, metadata):
     # -------------------------------------------------------------------------
     target = metadata['target']
     dataset = metadata['dataset']
+    ml_type = metadata['type']
     data_df = pd.DataFrame.from_dict(data)
-    X = data_df.drop(columns=[target])
+    X = data_df[numeric_cols]
+    if ml_type == 'regression':
+        X = X.drop(columns=[target])
     y = data_df[target]
     # Calculate mutual information
-    mi_scores = make_mi_scores(X, y)
+    mi_scores = make_mi_scores(X, y, ml_type)
     features = list(mi_scores.index)
     scores = list(mi_scores.values)
     # Calculate PCA components
@@ -142,5 +150,7 @@ if __name__ == '__main__':
     dataset = metadata['dataset']
     id_col = dataset + '_id'
     del data[id_col]
-    tab = feature_importance(data, metadata)
+    table_cols = list(data.keys())
+    numeric_cols = [x for x in table_cols if type(data[x][0]) in (float, int)]
+    tab = feature_importance(data, metadata, numeric_cols)
     show(tab.child)

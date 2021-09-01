@@ -18,10 +18,11 @@ from pathlib import Path
 # Local application/library specific imports
 from bokeh.models import Tabs
 from bokeh.plotting import curdoc
-from bokeh_server.eda.tabs.crossfilter_class_tab import crossfilter_class_tab
+from bokeh_server.eda.tabs.crossfilter_tab import crossfilter_cls, \
+    crossfilter_reg
 from bokeh_server.eda.tabs.features_tab import feature_importance
-from bokeh_server.eda.tabs.gridplot_tab import gridplot_tab
-from bokeh_server.eda.tabs.summary_tab import summary_tab
+from bokeh_server.eda.tabs.gridplot_tab import gridplot_cls, gridplot_reg
+from bokeh_server.eda.tabs.summary_tab import summary_cls, summary_reg
 
 
 # -----------------------------------------------------------------------------
@@ -54,10 +55,15 @@ marker_order = ['circle', 'square', 'plus', 'star', 'triangle', 'diamond',
 # -----------------------------------------------------------------------------
 # Layout
 # -----------------------------------------------------------------------------
-tab1 = summary_tab(data, numeric_cols, metadata)
-tab2, top4_features = feature_importance(data, metadata)
-tab3 = crossfilter_class_tab(data, numeric_cols, metadata, marker_order)
-tab4 = gridplot_tab(data, top4_features, metadata, marker_order)
+tab2, top4_features = feature_importance(data, metadata, numeric_cols)
+if ml_type == 'classification':
+    tab1 = summary_cls(data, numeric_cols, metadata)
+    tab3 = crossfilter_cls(data, numeric_cols, metadata, marker_order)
+    tab4 = gridplot_cls(data, top4_features, metadata, marker_order)
+elif ml_type == 'regression':
+    tab1 = summary_reg(data, numeric_cols, metadata)
+    tab3 = crossfilter_reg(data, numeric_cols, metadata, marker_order)
+    tab4 = gridplot_reg(data, top4_features, metadata, marker_order)
 final_layout = Tabs(tabs=[tab1, tab2, tab3, tab4])
 
 curdoc().add_root(final_layout)
