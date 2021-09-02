@@ -13,3 +13,6 @@ bokeh_secret_key.txt
 db_root_password.txt
 db_user_password.txt
 web_secret_key.txt
+
+# Documentation (large GIF files)
+docs/

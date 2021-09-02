@@ -307,7 +307,7 @@ def regression_results():
     <div style="display: table; height: 50px; overflow: hidden;">
         <div style="display: table-cell; vertical-align: middle;
         width: {settings_width}px; text-align: center;" class="bokeh_title2">
-            <h1 class="bokeh_header2"><b>{dataset}</b> Training Settings</h1>
+            <h1 class="bokeh_header2">{dataset} Training Settings</h1>
         </div>
     </div>
     <div>

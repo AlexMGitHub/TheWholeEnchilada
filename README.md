@@ -1,4 +1,198 @@
-# TheWholeEnchilada
+# The Whole Enchilada
+
+<p align="center">
+<img src="docs/img/twe.gif" title="The Whole Enchilada" alt="The Whole Enchilada" width="600"/>
+</p>
+
+## Overview
+
+The Whole Enchilada (TWE) is a demonstration project utilizing a variety of technologies to train and deploy machine learning algorithms:
+
+  - **Containerization:**
+    - Containerization using Docker
+    - Container orchestration using Docker Compose
+    - Allows web app, database, and visualization containers to communicate
+    - No need for user to worry about installing dependencies
+  - **Web App Container:**
+    - Built from the official Python Docker image
+    - Web server powered by `Flask` and `Waitress`
+    - Web app constructed from Jinja templates and styled using Bootstrap
+  - **Database Container:**
+    - Oracle's official MySQL Docker image
+    - MySQL server stores machine learning datasets
+    - Responds to queries for machine learning data from web app
+    - Used by `Flask-Login` to authenticate web app users
+  - **Visualizations Container:**
+    - Built from the official Python Docker image
+    - Visualizations produced by a `Bokeh` server for EDA and evaluation of model performance
+    - Serves visualizations for datasets selected by user in web app
+    - `Bokeh` widgets allow user to select ML models and tune hyperparameters
+    - Regression and classification powered by `scikit-learn`
+
+[Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/) are required to run TWE.  See the following section for instructions on setting up Docker secrets and building the Docker images.
+
+
+## The Whole Enchilada Setup
+
+Once Docker and Docker Compose are installed, clone this repo and navigate to the `docker/secrets/` directory.  Follow the instructions contained in the example files to create secret keys and passwords.  Refer to the [Docker secrets section below](#passing-credentials-and-sensitive-information-using-docker-secrets) for more details.
+
+Run the following command inside the cloned directory to build the TWE images and launch all three containers:
+
+```bash
+$ docker-compose up
+```
+
+You can add the optional `-d` argument at the end of the command to "detach" or run without needing a terminal open.  However, the MySQL database takes some time to initialize the first time that the container is launched, and so I recommend running Docker Compose attached to the terminal so that you receive a notification when the database is ready.  Once the containers are launched and initialized, navigate to `http://localhost:5000/` to access the web app and log in with your MySQL username and password.  The MySQL username is defined in `docker-compose.yaml` and is set to "flask" by default.  If you wish to change this default do so *before* building the images.
+
+The above command will run TWE in production mode.  If you'd like to run TWE in development mode use the following command:
+
+```bash
+$ docker-compose -f docker-compose.yml -f docker/docker-compose.dev.yml up -d
+```
+
+More details on the differences between production mode and development are discussed in the following sections.
+
+
+## The Whole Enchilada's Features
+
+### Docker and Docker Compose
+
+TWE is comprised of three containers spun-up from three Docker images that communicate with each other over a single Docker network.  One of the images is Oracle's [official MySQL Docker image](https://hub.docker.com/_/mysql) and is used without modification.  The other two images use the [official Python Docker image](https://hub.docker.com/_/python) as a base image, and run a `Flask` web app and a `Bokeh` server, respectively.
+
+The two Python images are designed using [multi-stage Docker files](https://docs.docker.com/develop/develop-images/multistage-build/) that break the Dockerfile into base, development, and production stages.  The base stage includes operations that are common to both the development and production stages.  The latter stages build on top of this base stage with stage-specific operations.  This removes the need for having multiple Dockerfiles, reduces image size, and speeds up build time when creating the image.  I was careful to follow Docker's [best practices guide](https://docs.docker.com/develop/develop-images/dockerfile_best-practices/) when creating the Dockerfiles to leverage the build cache as much as possible.  In general, this means organizing the order of operations in the Dockerfile from least-frequently changed to most-frequently changed, and only copying files to the image that are absolutely necessary for the build.  This approach minimizes the number of layers that will be invalidated when a copied file or a Dockerfile operation change.
+
+The major differences between development mode and production mode are as follows:
+
+- **Development mode:**
+  - Runs Flask in development mode which restarts the web server on changes to source code
+  - Runs Bokeh server in development mode which restarts the server on changes to source code
+    - Only works on one Bokeh app at a time!  See `src/bokeh_server/boot.sh` for details.
+  - Allows the user to run unit tests and integration tests from within the Flask web app
+
+- **Production mode:**
+  - Runs web app using the `Waitress` production WSGI web server
+  - Runs all three Bokeh apps (EDA, train, results) without development mode
+  - Removes the option to run unit tests and integration tests from the web app
+
+
+### Passing Credentials and Sensitive Information using Docker Secrets
+
+Sensitive information such as the MySQL passwords and the secret keys for the `Flask` and `Bokeh` servers should not be hard-coded in plain text in either the Python code or the Docker Compose YAML file.  A common approach in non-Docker contexts is to create a file (typically named `.env`) containing the sensitive information and use [python-dotenv](https://pypi.org/project/python-dotenv/) to load the sensitive data into environment variables.  So long as this `.env` file is not committed to source control or copied to the Docker image it would appear to be a secure method to pass sensitive data to the Docker containers.
+
+The problem with the environment variable approach is that the sensitive information stored in the environment could be viewed by an end user.  This is a potential security risk, and so Docker recommends the so-called "Docker secrets" approach to handling sensitive information that needs to be passed to Docker containers.
+
+Docker secrets encrypts passwords or other sensitive information and only makes it available to services that have been granted explicit access to it.  The key here is that the secrets are only available to *services*, not standalone containers.  This approach will thus only work with Docker Compose and Docker Swarm.  The official documentation for Docker secrets has an [example using Docker Compose](https://docs.docker.com/engine/swarm/secrets/#use-secrets-in-compose) for a MySQL database - exactly my use-case!  The MySQL environment variables in the YAML file can be set to named secret variables, which in turn point to unencrypted files that store the passwords in plain text on the local machine.  The contents of these local files are encrypted and stored in the Docker image.  When a container is created from the image, the contents of the secret files are decrypted and stored in `/run/secrets/` in the memory of the container.  The decrypted information is then accessible by code run inside the container.
+
+The documentation does not provide any information as to the formatting of these files, or whether multiple passwords could be stored in a single file.  I assume that each file can only contain one password.
+
+The final configuration requires four separate files:
+- **bokeh_secret_key.txt** to supply a secret key to both the Bokeh and Flask servers
+- **db_root_password.txt** to supply the secret root password to the MySQL and Flask servers
+- **db_user_password.txt** to supply the secret user password to the MySQL server
+- **web_secret_key.txt** to supply a secret key to the Flask webserver for generating CSRF tokens
+
+I've included examples of these files (suffixed with '_example') in this repository for reference.  They are meant to be copied and renamed to the filenames above and filled out with the desired passwords.  All secret files are added to both `.gitignore` and `.dockerignore` so that the sensitive information that they contain does not end up in the Git repository or the Docker image, respectively.
+
+
+## MySQL
+Relational databases are ubiquitous, and the Structured Query Language (SQL) is the most popular language for interfacing with these types of databases.  Most people working in the field of data science or machine learning need to be proficient at basic SQL queries.  One of the goals of this project was to learn how to write SQL queries and how to access an SQL database using Python.  I chose to use version 8 of [Oracle's MySQL database](https://www.mysql.com/products/community/).  MySQL is open source, and Oracle provides both a Docker image of a MySQL server as well as a Python package called [MySQL Connector/Python](https://dev.mysql.com/doc/connector-python/en/) to access the database via Python code.  In addition to Oracle's excellent online documentation, I also referred to [Murach's MySQL](#references) and solved all of the programming exercises in the first several chapters.  I used my solutions to these exercises as integration tests to verify that the container running the `Flask` web server could access MySQL databases in the container running the MySQL server.
+
+### TWE's use of the MySQL server
+TWE allows the user to select from four "toy" datasets commonly used for pedagogical purposes. Of course, these tiny datasets don't need to be stored in a relational database - they're small enough to be directly loaded from a text file.  One of the functions of the `Flask` web app is to query data from the MySQL server and use it to train a `scikit-learn` machine learning model, and for this purpose the toy datasets work just fine.  I created a database called `ml_data` on the MySQL server by passing an environment variable in the Docker Compose YAML file.  The web app user can load tables into this database by navigating to the appropriate page and selecting the toy dataset of interest.  The MySQL Connector/Python then reads in the corresponding .SQL file and executes its commands to insert the table into the database.
+
+In addition to passing the `ml_data` database name in the Docker Compose YAML, I also pass the user account "flask" that will be granted superuser access to the `ml_data` database.  The "flask" user must be logged into the MySQL server to add or query tables.  The MySQL server thus serves a second purpose by providing user authentication for the web app in concert with the `Flask-Login` package.  The user logs into the web app using his MySQL "flask" username and password, and `Flask-Login` queries the MySQL server every time the user visits a route protected with the `@login_required` decorator.  The query itself is simple - it queries the [USER()](https://dev.mysql.com/doc/refman/8.0/en/information-functions.html#function_user) function and checks to see that the username returned by the MySQL server matches the user logged into the web app.  The username check itself isn't particularly important; it's mostly checking that the user is logged into the MySQL database as the query can't be made without an active connection.  The web app redirects the user to the login page if the query fails.
+
+
+### User
+user_loader has to hit database on every pageview, find stackoverflow link
+secret key for flask-login
+need to run integration tests as root
+
+
+
+### MySQL Default Authentication Method
+As of MySQL 8.0, the default authentication method is `caching_sha2_password`.  The example Docker Compose YAML shown on the [Docker MySQL server image on Docker Hub](https://hub.docker.com/_/mysql/) still lists `mysql_native_password`.  This should be changed to `caching_sha2_password` in the YAML file for MySQL 8.0, and specified as the `auth_plugin` when connecting to the server using MySQL Connector/Python.
+
+
+
+
+## Bokeh
+`Bokeh` is a Python data visualization library that links with `BokehJS`, a JavaScript client library that actually renders the visuals in a web browser.  `Bokeh` allows you to create interactive plots and widgets in Python that can be deployed in web apps or Jupyter notebooks, while handling all of the JavaScript behind the scenes.  Their documentation states _**“We write the JavaScript, so you don’t have to."**_
+
+`Bokeh` will generate all of the HTML and JavaScript necessary to create beautiful interactive plots with dropdown menus, tabs, slider bars, radio buttons, and other types of widgets.  However, there is a catch: callback functions are required to make the widgets interactive.  The standalone HTML file generated by `Bokeh` will work fine for simple plots that only require zooming and panning, but if widgets are desired a `Bokeh` server must be run to set up event handlers.  As stated in the documentation:
+
+> The primary purpose of the Bokeh server is to synchronize data between the underlying Python environment and the BokehJS library running in the browser.
+
+The only other option is to write [JavaScript callbacks](https://docs.bokeh.org/en/latest/docs/user_guide/interaction/callbacks.html#userguide-interaction-jscallbacks) that can be embedded in the page along with the visualization itself.  Seeing as that would violate the spirit of `Bokeh` (and because I don't want write JavaScript) I chose to run a `Bokeh` server in a separate Docker container to serve my plots.
+
+#### Setting up a Bokeh server
+Setting up the `Bokeh` server ended up being trickier than I had imagined.  The `Bokeh` server must be accessible to both the `Flask` webserver residing inside the Docker network, and to the client (browser) viewing the `Bokeh` visualizations.  Per the documentation:
+
+> To reduce the risk of cross-site misuse, the Bokeh server will only initiate WebSocket connections from the origins that are explicitly allowed. Requests with Origin headers that are not on the allowed list will generate HTTP 403 error responses.
+
+And so in the `Bokeh` Dockerfile I added `ENV BOKEH_ALLOW_WS_ORIGIN=localhost:5000,localhost:5006` to allow access to requests originating from the `Flask` webserver and the user's browser, respectively.  But there's another gotcha: within the Docker network, `Flask` connects to the `Bokeh` server at `http://bokeh:5006/`.  However, the client (browser) will connect to the `Bokeh` server at `http://localhost:5006/`.  This causes a problem, because the script embedded into the Jinja template will contain an invalid URL!  To fix this, I simply use the Python `replace()` function to swap out the URLs before rendering the Jinja template.  This allows me to successfully serve a `Bokeh` visualization (with callbacks) from my `Flask` webserver.
+
+#### Securing access to Bokeh server
+However, this means that an unauthenticated user could gain access to the `Bokeh` visualizations just by navigating to `http://localhost:5006/` in their browser.  The `Bokeh` documentation discusses using [signed session IDs](https://docs.bokeh.org/en/latest/docs/user_guide/server.html?highlight=session_id%20options#signed-session-ids) to embed a `Bokeh` application inside a `Flask` webapp in such a way that *only* requests authorized by your webapp are accepted by the `Bokeh` server.  [This Stackoverflow post](https://stackoverflow.com/questions/43183531/simple-username-password-protection-of-a-bokeh-server) goes into greater detail on how to go about implementing this feature.  A secret key must be supplied to the `Bokeh` server and the `Flask` webapp.  A secure secret key can be conveniently generated for your use by typing `bokeh secret` into the terminal after installing `Bokeh`.  I passed the secret key to both containers using Docker secrets and set the `Bokeh` container's `BOKEH_SIGN_SESSIONS` environment variable to `yes` (documentation sometimes says to use `True`).  I set the `ENTRYPOINT` of the `Bokeh` Dockerfile to run a bash script to set the secret key as an environment variable.  I built the images, spun up the containers, and navigated my browser to the appropriate webapp route - but it didn't work!
+
+Even after hours of fiddling with the code I continued to receive an error claiming that I had an invalid token signature when I attempted to serve a visualization through `Flask`.  After a great deal of frustrated web searching, I came across [this post](https://discourse.bokeh.org/t/flask-bokeh-externally-signed-sessions-invalid-token-signature-error/7059/4) that pointed out an omission in the documentation: the `BOKEH_SIGN_SESSIONS=yes` environment variable must also be set in the container running `Flask`!  If it's not, the session ID generated using `generate_session_id()` will not be signed, even if the `signed=True` argument is set in the function call!  Once I set this environment variable I was finally able to securely&dagger; serve `Bokeh` visualizations through my webapp with support for callbacks.
+
+&dagger; *Not as securely as I would like, as the secret key must be contained in an environment variable as plain text.  Unfortunately, until the above bug is fixed there does not appear to be any other way to make the signed session ID approach work.*
+
+### Checking if the Bokeh plot has rendered
+Large Bokeh visualizations take a few seconds to load, and so I added a Bootstrap spinner to my Jinja template to give a visual indication to the user that something is happening.  However, hiding the spinner once the visualization rendered again proved trickier than I expected.  I assumed that I could write a JavaScript function that is called on a `document.onreadystatechange` event to hide the spinner once the visualization renders, but that approach didn't work.  The document is considered to be completely loaded (`document.readyState === "complete"`) before the visualization is rendered, and so the spinner never appears on the page.  After some experimentation, I found that I could wrap the injected `Bokeh` JavaScript code in a `<div>` and use `ResizeObserver` to check if the height of the `<div>` was greater than zero.  If so, the visualization has rendered and the spinner can be hidden.
+
+#### Limitations of the Bokeh server
+It's possible to serve multiple apps by list each app's file or directory in the command:
+
+```bash
+bokeh serve src/bokeh_server/eda src/bokeh_server/train src/bokeh_server/results --address 0.0.0.0 --session-ids external-signed
+```
+This will serve the all three of the TWE visualizations and is the ENTRYPOINT command I use in production mode.  However, `Bokeh`'s development mode will only work with one app at a time.  And so to serve the exploratory data analysis visualization (for instance) in development mode, I use the following commmand:
+
+```bash
+bokeh serve src/bokeh_server/eda --dev --address 0.0.0.0 --session-ids external-signed
+```
+
+Putting the `Bokeh` server in development mode is essential during the final tweaking of the visualization, because otherwise the `Bokeh` server must be stopped and restarted for changes to take effect.
+
+### Machine learning using scikit-learn and Bokeh
+
+
+multi-stage docker file and docker compose override
+difference between dev and prod modes
+unit tests, use subprocess for in browser tests
+bokeh serve --dev can only work for one app at a time
+separate requirements files
+best practices
+- MySQL
+  - connector python
+  - murach's mysql and integ tests
+  - query statistical summary vs using pandas
+  - datasets and loading into sql
+  - toy datasets
+- Flask
+  - miguel grinberg's book on setting up flask bluprints and app factory
+  - bootstrap and jinja templates
+    - getting iframes to load and other probs
+  - authentication with flask-login and mysql
+  - waitress for production
+  - query db, save file to volume shared with bokeh
+  - testing
+- Bokeh
+  - overview of how eda/train/test works
+  - warning again about --dev
+  - ml overview with scikit learn
+- docker secrets
+
+
+## Test
+
+docker
+flask web app
+bokeh server
+
+Testing in browser in dev mode
 
 - shows all environment vars, including secret vars used as environment variables
  `docker exec <container> env`
@@ -53,6 +247,13 @@ https://www.kaggle.com/ryanholbrook/mutual-information
 ## Docker commands
 
 The following commands apply to the temporary Machine Learning/working/mysql/ directory
+- Run twe in dev mode:
+
+
+```bash
+$ docker-compose -f docker-compose.yml -f docker/docker-compose.dev.yml up -d
+```
+
 
 - Run mysql docker image (make sure VPN temporarily disconnected first time this command is run):
 `sudo docker-compose up`
@@ -164,28 +365,6 @@ if cursor.rowcount == 0:  # db doesn't exist
 - Use bootstrap-flask extension, not flask-bootstrap as the latter is outdated and not maintained
 - https://github.com/flask-debugtoolbar/flask-debugtoolbar
 
-## MySQL Default Authentication Method
-As of MySQL 8.0, the default authentication method is `caching_sha2_password`.  The example Docker Compose YAML shown on the [Docker MySQL server image on Docker Hub](https://hub.docker.com/_/mysql/) still lists `mysql_native_password`.  This should be changed to `caching_sha2_password` in the YAML file for MySQL 8.0, and specified as the `auth_plugin` when connecting to the server using MySQL Connector/Python.
-
-
-## Passing Credentials and Sensitive Information using Docker Secrets
-
-The MySQL passwords and Flask secret key should not be hard-coded in plain text in either the Flask Python code or the Docker Compose YAML file.  A common approach in non-Docker contexts is to create a file (typically named `.env`) containing the sensitive information and use [python-dotenv](https://pypi.org/project/python-dotenv/) to load the sensitive data into environment variables.  So long as this `.env` file is not committed to source control or copied to the Docker image it would appear to be a secure method to pass sensitive data to the Docker containers.
-
-The problem with the environment variable approach is that the sensitive information stored in the environment could be viewed by an end user.  This is a potential security risk, and so Docker recommends the so-called "Docker secrets" approach to handling sensitive information that needs to be passed to Docker containers.
-
-Docker secrets encrypts passwords or other sensitive information and only makes it available to services that have been granted explicit access to it.  The key here is that the secrets are only available to *services*, not standalone containers.  This approach will thus only work with Docker Compose and Docker Swarm.  The official documentation for Docker secrets has an [example using Docker Compose](https://docs.docker.com/engine/swarm/secrets/#use-secrets-in-compose) for a MySQL database - exactly my use-case!  The MySQL environment variables in the YAML file can be set to named secret variables, which in turn point to unencrypted files that store the passwords in plain text on the local machine.  The contents of these local files are encrypted and stored in the Docker image.  When a container is created from the image, the contents of the secret files are decrypted and stored in `/run/secrets/` in the memory of the container.  The decrypted information is then accessible by code run inside the container.
-
-The documentation does not provide any information as to the formatting of these files, or whether multiple passwords could be stored in a single file.  I assume that each file can only contain one password.
-
-The final configuration requires four separate files:
-- **bokeh_secret_key.txt** to supply a secret key to both the Bokeh and Flask servers
-- **db_root_password.txt** to supply the secret root password to the MySQL and Flask servers
-- **db_user_password.txt** to supply the secret user password to the MySQL server
-- **web_secret_key.txt** to supply a secret key to the Flask webserver for generating CSRF tokens
-
-I've included examples of these files (suffixed with '_example') in this repository for reference.  They are meant to be copied and renamed to the filenames above and filled out with the desired passwords.  All secret files are added to both `.gitignore` and `.dockerignore` so that the sensitive information that they contain does not end up in the Git repository or the Docker image, respectively.
-
 
 ## References
 
@@ -198,10 +377,6 @@ Cite datasets origin/license if applicable
 
 <div>Icons made by <a href="" title="Icongeek26">Icongeek26</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div>
 
-### User
-user_loader has to hit database on every pageview, find stackoverflow link
-secret key for flask-login
-need to run integration tests as root
 
 ### Multi-stage Docker Files
 Use multi-stage docker file approach for creating development/production builds
@@ -261,50 +436,6 @@ ORDER BY COUNT(*), host_short;
   - Dev only feature?
 
 
-### Bokeh
-- Use webgl option to speed up rendering
-- Use tabs for different ML models?
-- bokeh authentication
-- “We write the JavaScript, so you don’t have to”
-
-`Bokeh` is a Python data visualization library that links with `BokehJS`, a JavaScript client library that actually renders the visuals in a web browser.  `Bokeh` allows you to create interactive plots and widgets in Python that can be deployed in web apps or Jupyter notebooks, while handling all of the JavaScript behind the scenes.  Their documentation states _**“We write the JavaScript, so you don’t have to."**_
-
-`Bokeh` will generate all of the HTML and JavaScript necessary to create beautiful interactive plots with dropdown menus, tabs, slider bars, radio buttons, and other types of widgets.  However, there is a catch: callback functions are required to make the widgets interactive.  The standalone HTML file generated by `Bokeh` will work fine for simple plots that only require zooming and panning, but if widgets are desired a `Bokeh` server must be run to set up event handlers.  As stated in the documentation:
-
-> The primary purpose of the Bokeh server is to synchronize data between the underlying Python environment and the BokehJS library running in the browser.
-
-The only other option is to write [JavaScript callbacks](https://docs.bokeh.org/en/latest/docs/user_guide/interaction/callbacks.html#userguide-interaction-jscallbacks) that can be embedded in the page along with the visualization itself.  Seeing as that would violate the spirit of `Bokeh` (and because I don't want write JavaScript) I chose to run a `Bokeh` server in a separate Docker container to serve my plots.
-
-#### Setting up a Bokeh server
-Setting up the `Bokeh` server ended up being trickier than I had imagined.  The `Bokeh` server must be accessible to both the `Flask` webserver residing inside the Docker network, and to the client (browser) viewing the `Bokeh` visualizations.  Per the documentation:
-
-> To reduce the risk of cross-site misuse, the Bokeh server will only initiate WebSocket connections from the origins that are explicitly allowed. Requests with Origin headers that are not on the allowed list will generate HTTP 403 error responses.
-
-And so in the `Bokeh` Dockerfile I added `ENV BOKEH_ALLOW_WS_ORIGIN=localhost:5000,localhost:5006` to allow access to requests originating from the `Flask` webserver and the user's browser, respectively.  But there's another gotcha: within the Docker network, `Flask` connects to the `Bokeh` server at `http://bokeh:5006/bokeh`.  However, the client (browser) will connect to the `Bokeh` server at `http://localhost:5006/`.  This causes a problem, because the script embedded into the `Jinja` template will contain an invalid URL!  To fix this, I simply use the Python `replace()` function to swap out the URLs before rendering the `Jinja` template.  This allows me to successfully serve a `Bokeh` visualization (with callbacks) from my `Flask` webserver.
-
-#### Securing access to Bokeh server
-However, this means that an unauthenticated user could gain access to the `Bokeh` visualizations just by navigating to `http://localhost:5006/bokeh` in their browser.  The `Bokeh` documentation discusses using [signed session IDs](https://docs.bokeh.org/en/latest/docs/user_guide/server.html?highlight=session_id%20options#signed-session-ids) to embed a `Bokeh` application inside a `Flask` webapp in such a way that *only* requests authorized by your webapp are accepted by the `Bokeh` server.  [This Stackoverflow post](https://stackoverflow.com/questions/43183531/simple-username-password-protection-of-a-bokeh-server) goes into greater detail on how to go about implementing this feature.  A secret key must be supplied to the `Bokeh` server and the `Flask` webapp.  A secure secret key can be conveniently generated for your use by typing `bokeh secret` into the terminal after installing `Bokeh`.  I passed the secret key to both containers using Docker secrets and set the `Bokeh` container's `BOKEH_SIGN_SESSIONS` environment variable to `yes` (documentation sometimes says to use `True`).  I set the `ENTRYPOINT` of the `Bokeh` Dockerfile to run a bash script to set the secret key as an environment variable.  I built the images, spun up the containers, and navigated my browser to the appropriate webapp route - but it didn't work!
-
-Even after hours of fiddling with the code I continued to receive an error claiming that I had an invalid token signature when I attempted to serve a visualization through `Flask`.  After a great deal of frustrated web searching, I came across [this post](https://discourse.bokeh.org/t/flask-bokeh-externally-signed-sessions-invalid-token-signature-error/7059/4) that pointed out an omission in the documentation: the `BOKEH_SIGN_SESSIONS=yes` environment variable must also be passed to `Flask`!  If it's not, the session ID generated using `generate_session_id()` will not be signed, even if the `signed=True` argument is set in the function call!  Once I set this environment variable I was finally able to securely&dagger; serve `Bokeh` visualizations through my webapp with support for callbacks.
-
-&dagger; *Not as securely as I would like, as the secret key must be contained in an environment variable as plain text.  Unfortunately, until the above bug is fixed there does not appear to be any other way to make the signed session ID approach work.*
-
-#### Limitations of the Bokeh server
-Not designed for multiple apps.
-serve multiple apps by doing something like:
-
-```bash
-bokeh serve `ls *.py` --address 0.0.0.0 --session-ids external-signed
-```
-
-#### LRU Cache
-- https://github.com/bokeh/bokeh/blob/branch-2.4/examples/app/stocks/main.py
-- uses "least recently used" cache from functools
-- caches responses so that repeated calls with teh same arguments can be returned without recalculating (memoization)
--
-
-### Checking if the Bokeh plot has rendered
-Large Bokeh visualizations take a few seconds to load, and so I added a Bootstrap spinner to my Jinja template to give a visual indication to the user that something is happening.  However, hiding the spinner once the visualization rendered again proved trickier than I expected.  I assumed that I could write a JavaScript function that is called on a `document.onreadystatechange` event to hide the spinner once the visualization renders, but that approach didn't work.  The document is considered to be completely loaded (`document.readyState === "complete"`) before the visualization is rendered, and so the spinner never appears on the page.  After some experimentation, I found that I could wrap the injected Bokeh JavaScript code in a `<div>` and use `ResizeObserver` to check if the height of the `<div>` was greater than zero.  If so, the visualization has rendered and the spinner can be hidden.
 
 ### Citation Policy:
 

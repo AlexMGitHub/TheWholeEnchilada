@@ -20,17 +20,16 @@ services:
       - "/etc/localtime:/etc/localtime:ro"
     ports:
       - "3306:3306"
+
   web:
     build:
       context: ./
       dockerfile: ./docker/webapp.Dockerfile
-      target: development
     ports:
       - "5000:5000"
     volumes:
+      # Shared volume between bokeh and web containers
       - data-volume:/twe/src/bokeh_server/data
-      # Enable this volume for development mode only
-      - ./:/twe
       # Set container to your timezone and local time
       - "/etc/timezone:/etc/timezone:ro"
       - "/etc/localtime:/etc/localtime:ro"
@@ -51,17 +50,16 @@ services:
       - db_user_password
       - db_root_password
       - web_secret_key
+
   bokeh:
     build:
       context: ./
       dockerfile: ./docker/bokeh.Dockerfile
-      target: development
     ports:
       - "5006:5006"
     volumes:
+      # Shared volume between bokeh and web containers
       - data-volume:/twe/src/bokeh_server/data
-      # Enable this volume for development mode only
-      - ./:/twe
       # Set container to your timezone and local time
       - "/etc/timezone:/etc/timezone:ro"
       - "/etc/localtime:/etc/localtime:ro"

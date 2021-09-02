@@ -19,7 +19,6 @@ from . import main
 from .dataset_manager import DatasetManager
 from ..testing import run_pytest, report_date_time
 from .. import db
-from utility.text_to_sql import IrisSQL, BostonSQL
 
 
 # %% Globals
