@@ -6,7 +6,6 @@
 # Testing related
 htmlcov/
 .coverage
-test-report/
 
 # Secret files
 bokeh_secret_key.txt

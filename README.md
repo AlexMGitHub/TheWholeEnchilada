@@ -33,37 +33,34 @@ The Whole Enchilada (TWE) is a demonstration project utilizing a variety of tech
 
 ## Table of Contents
 
-* [The Whole Enchilada](#the-whole-enchilada)
-   * [Overview](#overview)
-   * [Table of Contents](#table-of-contents)
-   * [Running The Whole Enchilada](#running-the-whole-enchilada)
-   * [Docker and Docker Compose](#docker-and-docker-compose)
-      * [Passing Credentials and Sensitive Information using Docker Secrets](#passing-credentials-and-sensitive-information-using-docker-secrets)
-   * [Flask](#flask)
-      * [Datasets](#datasets)
-         * [Selecting and loading a dataset](#selecting-and-loading-a-dataset)
-         * [Exploratory Data Analysis (EDA)](#exploratory-data-analysis-eda)
-            * [Summary Tab](#summary-tab)
-            * [Feature Importance Tab](#feature-importance-tab)
-            * [Crossfilter Tab](#crossfilter-tab)
-            * [Grid Plot Tab](#grid-plot-tab)
-      * [Train](#train)
-      * [Results](#results)
-      * [Running tests in development mode](#running-tests-in-development-mode)
-         * [Embedding the test reports](#embedding-the-test-reports)
-   * [MySQL](#mysql)
-      * [TWE's use of the MySQL server](#twes-use-of-the-mysql-server)
-      * [MySQL Default Authentication Method](#mysql-default-authentication-method)
-   * [Bokeh](#bokeh)
-      * [Setting up a Bokeh server](#setting-up-a-bokeh-server)
-      * [Securing access to the Bokeh server](#securing-access-to-the-bokeh-server)
-      * [Checking if the Bokeh plot has rendered](#checking-if-the-bokeh-plot-has-rendered)
-      * [Limitations of the Bokeh server](#limitations-of-the-bokeh-server)
-      * [Bokeh versus Seaborn](#bokeh-versus-seaborn)
-   * [References and Acknowledgments](#references-and-acknowledgments)
-   * [Appendix A: Useful Commands](#appendix-a-useful-commands)
-      * [General Docker commands](#general-docker-commands)
-      * [Docker commands for MySQL container](#docker-commands-for-mysql-container)
+ * [Running The Whole Enchilada](#running-the-whole-enchilada)
+ * [Docker and Docker Compose](#docker-and-docker-compose)
+    * [Passing Credentials and Sensitive Information using Docker Secrets](#passing-credentials-and-sensitive-information-using-docker-secrets)
+ * [Flask](#flask)
+    * [Datasets](#datasets)
+       * [Selecting and loading a dataset](#selecting-and-loading-a-dataset)
+       * [Exploratory Data Analysis (EDA)](#exploratory-data-analysis-eda)
+          * [Summary Tab](#summary-tab)
+          * [Feature Importance Tab](#feature-importance-tab)
+          * [Crossfilter Tab](#crossfilter-tab)
+          * [Grid Plot Tab](#grid-plot-tab)
+    * [Train](#train)
+    * [Results](#results)
+    * [Running tests in development mode](#running-tests-in-development-mode)
+       * [Embedding the test reports](#embedding-the-test-reports)
+ * [MySQL](#mysql)
+    * [TWE's use of the MySQL server](#twes-use-of-the-mysql-server)
+    * [MySQL Default Authentication Method](#mysql-default-authentication-method)
+ * [Bokeh](#bokeh)
+    * [Setting up a Bokeh server](#setting-up-a-bokeh-server)
+    * [Securing access to the Bokeh server](#securing-access-to-the-bokeh-server)
+    * [Checking if the Bokeh plot has rendered](#checking-if-the-bokeh-plot-has-rendered)
+    * [Limitations of the Bokeh server](#limitations-of-the-bokeh-server)
+    * [Bokeh versus Seaborn](#bokeh-versus-seaborn)
+ * [References and Acknowledgments](#references-and-acknowledgments)
+ * [Appendix A: Useful Commands](#appendix-a-useful-commands)
+    * [General Docker commands](#general-docker-commands)
+    * [Docker commands for MySQL container](#docker-commands-for-mysql-container)
 
 
 ## Running The Whole Enchilada
@@ -327,40 +324,52 @@ A collection of commands that I found useful during the development of TWE.
 
 ### General Docker commands
 - Show all existing containers, running or stopped:
+
 `docker ps -a`
 
 - Show all environment variables in a container
+
  `docker exec <container> env`
 
 - Show container's secret files
+
 `docker container exec $(docker ps --filter name=<container> -q) ls -l /run/secrets`
 
 - View secret
+
 `docker container exec $(docker ps --filter name=<container> -q) cat /run/secrets/<secret>`
 
 - Create terminal access to container
+
 `docker exec -it <container> bash`
 
 - Copy file from container to local disk
+
 `docker cp <container>:<container path> <local path>`
 
 - Check docker container's timezone
+
 `docker exec -it <container> cat /etc/timezone`
 
 
 ### Docker commands for MySQL container
 
 - Create bash terminal
+
 `docker exec -it <MySQL container> bash`
 
 - Login to MySQL server as root (enter root password at prompt)
+
 `mysql -uroot -p`
 
 - Dump entire database to a file
+
 `mysqldump -uroot -p --all-databases > dump.sql`
 
 - Load dump into mysql database
+
 `mysql -uroot -p < dump.sql`
 
 - Run .sql file from inside MySQL prompt (logged in as root):
+
 `source mysql/create_databases.sql`
